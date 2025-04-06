@@ -44,36 +44,15 @@ public class Repl(SttContext db)
     public void ShowItemList(string input)
     {
         //TODO: parse tag filters & filter items before querying
-
-        int maxIdWith = db.Items.Max(i => i.Id).ToString().Length;
-        int maxNamewith = db.Items.Max(i => i.Name.Length);
-        int dateMax = DATE_FORMAT.Length;
-
-        int idMax = Math.Max(maxIdWith, ID_HEADER.Length);
-        int nameMax = Math.Max(maxNamewith, NAME_HEADER.Length);
-        int createdMax = Math.Max(dateMax, CREATED_HEADER.Length);
-        int finishedMax = Math.Max(dateMax, FINISHED_HEADER.Length);
-
-        //TODO: add extra padding 1 char on each side
-        //-> create Table component to handle this completely
-
-        Print($"|{Padded(ID_HEADER, idMax)}|{Padded(NAME_HEADER, nameMax, false)}|{Padded(CREATED_HEADER, createdMax, false)}|{Padded(FINISHED_HEADER, finishedMax, false)}|");
-
-        foreach (var item in db.Items)
-        {
-            Print($"|{Padded(item.Id.ToString(), idMax)}|{Padded(item.Name, nameMax, false)}|{Padded(item.Created.ToString(DATE_FORMAT), createdMax, false)}|{Padded(item.Finished?.ToString(DATE_FORMAT) ?? FINISHED_PLACEHOLDER, finishedMax, false)}|");
-        }
-    }
-
-    private string Padded(string str, int maxWidth, bool padLeft = true)
-    {
-        if (padLeft) return str.PadLeft(maxWidth, ' ');
-        else return str.PadRight(maxWidth, ' ');
+        AsciiTable table = new();
+        table.AddColumns("ID", "Name", "Created", "Finished");
+        table.AddData(db.Items.Select(i => new object[] { i.Id, i.Name, i.Created.ToString(DATE_FORMAT), i.Finished }));
+        table.Print(4);
     }
 
     public void CreatItem(string input)
     {
-        string[] parts = input.Split(' ');
+        string[] parts = ParseCmdInput(input);
 
         if (parts.Length < 2) Print("Usage: add <name> #<tag1> #<tag2> ...");
 
@@ -88,6 +67,36 @@ public class Repl(SttContext db)
         db.SaveChanges();
 
         Print($"Added item {item.Id}-{item.Created}.");
+    }
+
+
+    public string[] ParseCmdInput(string input)
+    {
+        List<string> parts = [];
+
+        bool withinQuotes = false;
+        int lastIndex = 0;
+        for (int i = 0; i < input.Length; i++)
+        {
+            if (input[i] == ' ' && !withinQuotes)
+            {
+                parts.Add(input[lastIndex..i]);
+                // we want to be exclusive
+                lastIndex = i + 1;
+            }
+            else if (input[i] == '"')
+            {
+                if (withinQuotes)
+                {
+                    parts.Add(input[lastIndex..i]);
+                }
+
+                lastIndex = i + 1;
+                withinQuotes = !withinQuotes;
+            }
+        }
+
+        return parts.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
     }
 
     public void QueryItems()
