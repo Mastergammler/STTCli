@@ -1,4 +1,4 @@
-public class Repl(SttContext db)
+public class Repl(SttContext db, SttRepository repo)
 {
     const string INPUT_CHARS = ">> ";
     const string DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
@@ -29,11 +29,13 @@ public class Repl(SttContext db)
 
         switch (cmd)
         {
-            case "items": QueryItems(); break;
+            case "stats": ListDbStats(); break;
             case "exit":
                 db.SaveChanges();
                 is_running = false; break;
+            //TODO: add tags/items
             case "add": CreatItem(input); break;
+            //TODO: list items/tags
             case "list": ShowItemList(input); break;
             default:
                 Print($"Unknown command: '{cmd}'");
@@ -44,10 +46,26 @@ public class Repl(SttContext db)
     public void ShowItemList(string input)
     {
         //TODO: parse tag filters & filter items before querying
+
+        var tags = db.Tags.ToArray();
+
         AsciiTable table = new();
-        table.AddColumns("ID", "Name", "Created", "Finished");
-        table.AddData(db.Items.Select(i => new object[] { i.Id, i.Name, i.Created.ToString(DATE_FORMAT), i.Finished }));
+        table.AddColumns("ID", "Name", "Tags", "Created", "Finished");
+        table.AddData(db.Items.Select(i => new object[]
+        {
+            i.Id,
+            i.Name,
+            DisplayTags(tags, i.Tags),
+            i.Created.ToString(DATE_FORMAT),
+            i.Finished
+        }));
         table.Print(4);
+    }
+
+    private static string DisplayTags(Tag[] tags, long bitSet)
+    {
+        var tagNames = tags.Where(t => (t.Bit & bitSet) > 0).Select(t => t.Name);
+        return string.Join(", ", tagNames);
     }
 
     public void CreatItem(string input)
@@ -56,17 +74,11 @@ public class Repl(SttContext db)
 
         if (parts.Length < 2) Print("Usage: add <name> #<tag1> #<tag2> ...");
 
-        //TODO: handle tags
+        string name = parts[1];
+        var tags = parts.Where(p => p.StartsWith("#")).ToArray();
+        var msg = repo.CreateItem(name, tags);
 
-        var item = new ListItem
-        {
-            Name = parts[1],
-            Created = DateTime.UtcNow,
-        };
-        db.Add(item);
-        db.SaveChanges();
-
-        Print($"Added item {item.Id}-{item.Created}.");
+        Print(msg);
     }
 
 
@@ -96,13 +108,20 @@ public class Repl(SttContext db)
             }
         }
 
+        //FIXME: this doesn't parse all things correctly
+        if (lastIndex < input.Length) parts.Add(input[lastIndex..]);
+
         return parts.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
     }
 
-    public void QueryItems()
+    public void ListDbStats()
     {
-        int count = db.Items.Count();
-        Print($"The db holds {count} items");
+        int itemCount = db.Items.Count();
+        int tagCount = db.Tags.Count();
+
+        Print($"The db holds:");
+        Print($"- {itemCount} items");
+        Print($"- {tagCount} tags");
     }
 
     private void Print(string text)
