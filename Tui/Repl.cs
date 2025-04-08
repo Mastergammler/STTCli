@@ -1,15 +1,30 @@
-public class Repl(SttContext db, SttRepository repo)
+public class Repl
 {
-    const string INPUT_CHARS = ">> ";
-    const string DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-
-    const string ID_HEADER = "ID";
-    const string NAME_HEADER = "Item Name";
-    const string CREATED_HEADER = "Created";
-    const string FINISHED_HEADER = "Finshed";
+    public const string INPUT_CHARS = ">> ";
+    public const string DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     const string FINISHED_PLACEHOLDER = " - ";
 
     bool is_running = true;
+
+    private Dictionary<string, ICommand> _commands;
+
+    SttContext Db { get; }
+    SttRepository Repo { get; }
+
+    public Repl(SttContext db, SttRepository repo)
+    {
+        Db = db;
+        Repo = repo;
+
+        _commands = new()
+        {
+            ["list"] = new ListCmd(db),
+            ["exit"] = new QuitCmd(this),
+            ["add"] = new CreateItemCmd(repo),
+            ["stats"] = new DbStatsCmd(db),
+            ["delete"] = new DeleteItemCmd(db),
+        };
+    }
 
     public void MainLoop()
     {
@@ -25,62 +40,27 @@ public class Repl(SttContext db, SttRepository repo)
 
     public void Eval(string input)
     {
-        string cmd = input.Split(' ').FirstOrDefault() ?? string.Empty;
+        string[] cmd = ParseCmdInput(input);
+        if (cmd.Length == 0) return;
 
-        switch (cmd)
+        if (_commands.ContainsKey(cmd[0]))
         {
-            case "stats": ListDbStats(); break;
-            case "exit":
-                db.SaveChanges();
-                is_running = false; break;
-            //TODO: add tags/items
-            case "add": CreatItem(input); break;
-            //TODO: list items/tags
-            case "list": ShowItemList(input); break;
-            default:
-                Print($"Unknown command: '{cmd}'");
-                break;
+            _commands[cmd[0]].Execute(cmd.AsMemory(1));
+        }
+        else
+        {
+            Print($"Unknown command: '{cmd[0]}'");
         }
     }
 
-    public void ShowItemList(string input)
+    private class QuitCmd(Repl parent) : ICommand
     {
-        //TODO: parse tag filters & filter items before querying
-
-        var tags = db.Tags.ToArray();
-
-        AsciiTable table = new();
-        table.AddColumns("ID", "Name", "Tags", "Created", "Finished");
-        table.AddData(db.Items.Select(i => new object[]
+        public void Execute(Memory<string> args)
         {
-            i.Id,
-            i.Name,
-            DisplayTags(tags, i.Tags),
-            i.Created.ToString(DATE_FORMAT),
-            i.Finished
-        }));
-        table.Print(4);
+            parent.Db.SaveChanges();
+            parent.is_running = false;
+        }
     }
-
-    private static string DisplayTags(Tag[] tags, long bitSet)
-    {
-        var tagNames = tags.Where(t => (t.Bit & bitSet) > 0).Select(t => t.Name);
-        return string.Join(", ", tagNames);
-    }
-
-    public void CreatItem(string input)
-    {
-        string[] parts = ParseCmdInput(input);
-
-        if (parts.Length < 2) Print("Usage: add <name> #<tag1> #<tag2> ...");
-
-        string name = parts[1];
-        var tags = parts.Where(p => p.StartsWith("#")).ToArray();
-        var msg = repo.CreateItem(name, tags);
-
-        Print(msg);
-    }
-
 
     public string[] ParseCmdInput(string input)
     {
@@ -108,23 +88,18 @@ public class Repl(SttContext db, SttRepository repo)
             }
         }
 
-        //FIXME: this doesn't parse all things correctly
         if (lastIndex < input.Length) parts.Add(input[lastIndex..]);
 
         return parts.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
     }
 
-    public void ListDbStats()
+    // UTIL
+    public static string DisplayTags(Tag[] tags, long bitSet)
     {
-        int itemCount = db.Items.Count();
-        int tagCount = db.Tags.Count();
-
-        Print($"The db holds:");
-        Print($"- {itemCount} items");
-        Print($"- {tagCount} tags");
+        var tagNames = tags.Where(t => (t.Bit & bitSet) > 0).Select(t => t.Name);
+        return string.Join(", ", tagNames);
     }
-
-    private void Print(string text)
+    public static void Print(string text)
     {
         string placeholder = " ";
         Console.WriteLine($"{placeholder.PadLeft(INPUT_CHARS.Length, ' ')}{text}");
