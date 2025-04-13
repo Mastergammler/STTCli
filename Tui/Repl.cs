@@ -2,7 +2,7 @@ public class Repl
 {
     public const string INPUT_CHARS = ">> ";
     public const string DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-    const string FINISHED_PLACEHOLDER = " - ";
+    public const string SHORT_DATE = "dd MMM HH:mm";
 
     bool is_running = true;
 
@@ -10,6 +10,7 @@ public class Repl
 
     SttContext Db { get; }
     SttRepository Repo { get; }
+    SttCache Cache { get; } = new();
 
     public Repl(SttContext db, SttRepository repo)
     {
@@ -18,11 +19,11 @@ public class Repl
 
         _commands = new()
         {
-            ["list"] = new ListCmd(db),
-            ["exit"] = new QuitCmd(this),
-            ["add"] = new CreateItemCmd(repo),
             ["stats"] = new DbStatsCmd(db),
+            ["list"] = new ListCmd(db, Cache),
+            ["add"] = new CreateItemCmd(repo),
             ["delete"] = new DeleteItemCmd(db),
+            ["exit"] = new QuitCmd(this),
         };
     }
 
@@ -96,7 +97,7 @@ public class Repl
     // UTIL
     public static string DisplayTags(Tag[] tags, long bitSet)
     {
-        var tagNames = tags.Where(t => (t.Bit & bitSet) > 0).Select(t => t.Name);
+        var tagNames = tags.Where(t => (t.Bit & bitSet) > 0).Select(t => t.Name).Order();
         return string.Join(", ", tagNames);
     }
     public static void Print(string text)

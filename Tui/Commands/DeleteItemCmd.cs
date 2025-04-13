@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 using static Repl;
 
 public class DeleteItemCmd(SttContext db) : ICommand
@@ -10,22 +12,57 @@ public class DeleteItemCmd(SttContext db) : ICommand
             return;
         }
 
-        if (long.TryParse(args.Span[1], out long id))
+        string type = args.Span[0];
+        string idStr = args.Span[1];
+
+        if (long.TryParse(idStr, out long id))
         {
             //TODO: uses the same things as the list ones
             //-> so this should be unified
-            switch (args.Span[0])
+            //TODO: this is a visitor right?, For selection which items to use etc
+            // -> the visitor would be responsible for this list handling / selecting the entities everywhere
+            // -> And then we would have something for each CRUD thingy?
+            switch (type)
             {
                 case "items": db.Remove(db.Items.FirstOrDefault(i => i.Id == id)); break;
                 case "tags": db.Remove(db.Tags.FirstOrDefault(i => i.ID == id)); break;
-                default: Print($"Unknown list type '{args.Span[0]}'"); break;
+                default: Print($"Unknown list type '{type}'"); break;
             }
 
             db.SaveChanges();
         }
+        // range delete
+        else if (idStr.Contains("-"))
+        {
+
+            string[] parts = idStr.Split('-');
+            if (!long.TryParse(parts[0], out long startId))
+            {
+                Print($"Unable to parse {parts[0]} to a number!");
+                return;
+            }
+            if (!long.TryParse(parts[1], out long endId))
+            {
+                Print($"Unable to parse {parts[1]} to a number!");
+                return;
+            }
+
+            switch (type)
+            {
+                case "items":
+                    db.Items.Where(e => e.Id >= startId && e.Id < endId).ExecuteDelete();
+                    break;
+                case "tags":
+                    db.Tags.Where(e => e.ID >= startId && e.ID < endId).ExecuteDelete();
+                    break;
+                default: Print($"Unknown list type '{type}'"); break;
+            }
+            db.SaveChanges();
+        }
         else
         {
-            Print($"{args.Span[0]} is not a entity ID.");
+            Print($"{type} is not a type of entity.");
         }
+
     }
 }
