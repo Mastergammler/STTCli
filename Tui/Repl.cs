@@ -23,6 +23,7 @@ public class Repl
             ["list"] = new ListCmd(db, Cache),
             ["add"] = new CreateItemCmd(repo),
             ["delete"] = new DeleteItemCmd(db),
+            ["finish"] = new FinishCmd(db),
             ["exit"] = new QuitCmd(this),
         };
     }

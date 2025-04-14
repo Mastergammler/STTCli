@@ -1,8 +1,13 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 /// <summary>
 ///   Basic list item for friction list, problem list, todo list etc
 /// </summary>
 public class ListItem
 {
+    [NotMapped]
+    public bool IsFinished => Finished is not null;
+
     public long Id { set; get; }
     public string Name { set; get; }
     public DateTime Created { set; get; }
