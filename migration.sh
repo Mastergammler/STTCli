@@ -1,24 +1,24 @@
 #!/bin/bash
 
-projectName=Stt.Prototype.csproj
+projectName=src/Stt.Prototype.csproj
 dbContext=SttContext
-migrationDir=Migrations
+migrationDir=src/Migrations
 
 case "$1" in
     "add")
-    dotnet ef migrations add $2 --context $dbContext --output-dir $migrationDir
+    dotnet ef migrations add $2 --context $dbContext --output-dir $migrationDir --project $projectName
         ;;
     "update")
-    dotnet ef database update $2 --context $dbContext
+    dotnet ef database update $2 --context $dbContext --project $projectName
         ;;
     "remove")
-    dotent ef migrations remove
+    dotent ef migrations remove --project $projectName
         ;;
     "script")
-    dotnet ef migrations script
+    dotnet ef migrations script --project $projectName
         ;;
     "list")
-    dotnet ef migrations list --context $dbContext
+    dotnet ef migrations list --context $dbContext --project $projectName
         ;;
     *)
         echo "Unknown command '$1'"
