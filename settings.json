@@ -1,0 +1,18 @@
+{
+    "workspace": {
+        "folders": [
+            {
+                "path": "./",
+                "priority": 1
+            },
+            {
+                "path": "./test",
+                "priority": 2
+            },
+            {
+                "path":"./src",
+                "priority":3
+            }
+        ]
+    }
+}
