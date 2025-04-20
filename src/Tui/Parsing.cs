@@ -16,7 +16,7 @@ public static class Parsing
             }
             else if (input[i] == '"')
             {
-                if (withinQuotes)
+                if (withinQuotes ||  (i > 0 && input[i-1] != ' '))
                 {
                     parts.Add(input[lastIndex..i]);
                 }

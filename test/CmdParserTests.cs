@@ -41,4 +41,25 @@ public class CmdParserTests
         var parsed = Parsing.ParseCmdInput("hello\"there whats happening\"");
         Assert.AreEqual(new string[] { "hello", "there whats happening" }, parsed);
     }
+
+    [Test]
+    public void ParseInput_OpenQuote()
+    {
+        var parsed = Parsing.ParseCmdInput("hello\"there is no end");
+        Assert.AreEqual(new string[] { "hello", "there is no end" }, parsed);
+    }
+
+    [Test]
+    public void ParseInput_OpenClosing()
+    {
+        var parsed = Parsing.ParseCmdInput("hello \"");
+        Assert.AreEqual(new string[] { "hello" }, parsed);
+    }
+
+    [Test]
+    public void ParseInput_OpenClosingDirect()
+    {
+        var parsed = Parsing.ParseCmdInput("hello\"");
+        Assert.AreEqual(new string[] { "hello" }, parsed);
+    }
 }
