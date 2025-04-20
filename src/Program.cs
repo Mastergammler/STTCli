@@ -7,7 +7,7 @@ CultureInfo.DefaultThreadCurrentUICulture = culture;
 
 var setup = new Setup();
 var context = setup.CreateDbContext(args);
-var repository = new SttRepository(context);
 
-var repl = new Repl(context, repository);
+var factory = new CommandFactory(context);
+var repl = new Repl(factory);
 repl.MainLoop();

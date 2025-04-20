@@ -5,27 +5,22 @@ public class Repl
     public const string INPUT_CHARS = ">> ";
     public const string DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     public const string SHORT_DATE = "dd MMM HH:mm";
+    public const int DEFAULT_INDENT = 4;
 
     bool is_running = true;
 
     private Dictionary<string, ICommand> _commands;
 
-    SttContext Db { get; }
-    SttRepository Repo { get; }
-    SttCache Cache { get; } = new();
 
-    public Repl(SttContext db, SttRepository repo)
+    public Repl(ICommandFactory factory)
     {
-        Db = db;
-        Repo = repo;
-
         _commands = new()
         {
-            ["stats"] = new DbStatsCmd(db),
-            ["list"] = new ListCmd(db, Cache),
-            ["add"] = new CreateItemCmd(repo),
-            ["delete"] = new DeleteItemCmd(db),
-            ["finish"] = new FinishCmd(db),
+            ["stats"] = factory.Create<DbStatsCmd>(),
+            ["list"] = factory.Create<ListCmd>(),
+            ["add"] = factory.Create<CreateItemCmd>(),
+            ["delete"] = factory.Create<DeleteItemCmd>(),
+            ["finish"] = factory.Create<FinishCmd>(),
             ["exit"] = new QuitCmd(this),
         };
     }
@@ -54,6 +49,7 @@ public class Repl
         else
         {
             Print($"Unknown command: '{cmd[0]}'");
+            Print($"Available options are:\n{"".PadLeft(DEFAULT_INDENT)}{string.Join($"\n{"".PadLeft(DEFAULT_INDENT)}", _commands.Keys)}");
         }
     }
 
@@ -61,7 +57,8 @@ public class Repl
     {
         public void Execute(Memory<string> args)
         {
-            parent.Db.SaveChanges();
+            //FIXME: i might wanna have this, even thou i still save on every change atm
+            //parent.Db.SaveChanges();
             parent.is_running = false;
         }
     }
