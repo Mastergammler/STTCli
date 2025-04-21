@@ -18,12 +18,9 @@ public class ListItemsCmd(SttContext db, SttCache cache) : ICommand
             query = query.Where(i => i.Finished == null);
         }
 
-        // if there are multiple filters, it needs to be always pairs
-        var filterValue = args.Where(s => s.StartsWith("#"));
-        long filterTags = filterValue.Select(tagName => tags.SingleOrDefault(t => t.Name.Equals(tagName)))
-                                     .Aggregate(0L, (sum, tag) => sum | tag?.Bit ?? 0);
-        // OR tag filter
-        if (filterTags > 0) query = query.Where(i => (i.Tags & filterTags) > 0);
+        var filter = Parsing.ParseOptions(tags, args);
+        // OR tag filter for AND tags
+        if (filter.AndTags.Any()) query = query.Where(i => filter.AndTags.Any(t => (t & i.Tags) > 0));
 
         AsciiTable table = new();
         table.AddColumns(("ID", true), ("Name", false), ("Tags", false), ("Created", true), ("Finished", true));
