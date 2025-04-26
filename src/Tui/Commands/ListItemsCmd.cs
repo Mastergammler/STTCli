@@ -19,8 +19,21 @@ public class ListItemsCmd(SttContext db, SttCache cache) : ICommand
         }
 
         var filter = Parsing.ParseOptions(tags, args);
-        // OR tag filter for AND tags
-        if (filter.AndTags.Any()) query = query.Where(i => filter.AndTags.Any(t => (t & i.Tags) > 0));
+
+        List<IQueryable<ListItem>> queries = [];
+
+        foreach (TagSet ts in filter.Tags)
+        {
+            var subQuery = query.Where(i => (i.Tags & ts.Tags) == ts.Included);
+            queries.Add(subQuery);
+        }
+
+        if (queries.Any())
+        {
+            //PERF: not sure if this is a performant query
+            // but i guess its fine, because it's mostly only 1-3 items or something
+            query = queries.Aggregate((a, b) => a.Concat(b));
+        }
 
         AsciiTable table = new();
         table.AddColumns(("ID", true), ("Name", false), ("Tags", false), ("Created", true), ("Finished", true));

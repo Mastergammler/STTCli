@@ -42,8 +42,8 @@ public static class Parsing
         {
             if (IsTag(arg))
             {
-                long tagCompare = ParseTags(arg, dict);
-                opt.AndTags.Add(tagCompare);
+                var tagSet = ParseTags(arg, dict);
+                opt.Tags.Add(tagSet);
             }
 
             // TODO: handle other cases
@@ -52,9 +52,10 @@ public static class Parsing
         return opt;
     }
 
-    private static long ParseTags(string tagString, IDictionary<string, Tag> tags)
+    private static TagSet ParseTags(string tagString, IDictionary<string, Tag> tags)
     {
-        long andTags = 0;
+        TagSet ts = new();
+
         string[] ands = tagString.Split('&');
 
         foreach (string op in ands)
@@ -69,18 +70,17 @@ public static class Parsing
 
             if (tags.ContainsKey(tagName))
             {
-                long tagValue;
-                if (isComplement) tagValue = ~tags[tagName].Bit;
-                else tagValue = tags[tagName].Bit;
+                long tagValue = tags[tagName].Bit;
 
-                if (andTags == 0)
+                if (isComplement)
                 {
-                    andTags = tagValue;
+                    if (ts.Excluded == 0) ts.Excluded = tagValue;
+                    ts.Excluded |= tagValue; // punch out new zeros
                 }
                 else
                 {
-                    if (isComplement) andTags &= tagValue;
-                    else andTags |= tagValue;
+                    if (ts.Included == 0) ts.Included = tagValue;
+                    else ts.Included |= tagValue; // add new 1s together
                 }
             }
 
@@ -89,13 +89,18 @@ public static class Parsing
             // -> Or would this be the correct handling? Because i would want to know that something is wrong?
         }
 
-        return andTags;
+        return ts;
     }
 }
 
 public class FilterOptions
 {
-    public long Tags { set; get; } = 0;
-    public long NotTags { set; get; } = 0;
-    public List<long> AndTags { get; } = [];
+    public List<TagSet> Tags { get; } = [];
+}
+
+public class TagSet
+{
+    public long Included { set; get; } = 0;
+    public long Excluded { set; get; } = 0;
+    public long Tags => Included | Excluded;
 }
