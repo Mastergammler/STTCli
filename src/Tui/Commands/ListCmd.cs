@@ -5,5 +5,6 @@ public class ListCmd(ICommandFactory factory) : SubCommand
         _commands["items"] = factory.Create<ListItemsCmd>();
         _commands["tags"] = factory.Create<ListTagsCmd>();
         _commands["recent"] = factory.Create<ListRecentCmd>();
+        _commands["filters"] = factory.Create<ListFiltersCmd>();
     }
 }

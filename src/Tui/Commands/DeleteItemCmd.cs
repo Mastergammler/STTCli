@@ -26,6 +26,7 @@ public class DeleteItemCmd(SttContext db) : ICommand
             {
                 case "items": db.Remove(db.Items.FirstOrDefault(i => i.Id == id)); break;
                 case "tags": db.Remove(db.Tags.FirstOrDefault(i => i.ID == id)); break;
+                case "filter": db.Remove(db.Filters.FirstOrDefault(i => i.Id == id)); break;
                 default: Print($"Unknown list type '{type}'"); break;
             }
 

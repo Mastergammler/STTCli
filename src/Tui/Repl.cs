@@ -11,7 +11,6 @@ public class Repl
 
     private Dictionary<string, ICommand> _commands;
 
-
     public Repl(ICommandFactory factory)
     {
         _commands = new()
@@ -21,6 +20,8 @@ public class Repl
             ["add"] = factory.Create<CreateItemCmd>(),
             ["delete"] = factory.Create<DeleteItemCmd>(),
             ["finish"] = factory.Create<FinishCmd>(),
+            ["new"] = factory.Create<NewFilterCmd>(),
+            ["show"] = factory.Create<ShowListCmd>(),
             ["exit"] = new QuitCmd(this),
         };
     }

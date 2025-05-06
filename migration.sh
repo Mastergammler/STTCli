@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# relative to script directory
 projectName=src/Stt.Prototype.csproj
 dbContext=SttContext
-migrationDir=src/Migrations
+# relative to .csproj file
+migrationDir=Migrations
 
 case "$1" in
     "add")
@@ -12,7 +14,7 @@ case "$1" in
     dotnet ef database update $2 --context $dbContext --project $projectName
         ;;
     "remove")
-    dotent ef migrations remove --project $projectName
+    dotnet ef migrations remove --project $projectName
         ;;
     "script")
     dotnet ef migrations script --project $projectName
