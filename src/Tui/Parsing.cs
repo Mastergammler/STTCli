@@ -1,5 +1,65 @@
 public static class Parsing
 {
+    public static readonly DateTime TIME_TEMPLATE = new DateTime(1, 1, 1, 23, 0, 0);
+
+    public static DateTime? ParseDate(string input)
+    {
+        DateTime? dateLocalTime = null;
+        var inputInvariant = input.ToLower();
+
+        if (DateTime.TryParse(input, out DateTime result)) dateLocalTime = result;
+        else if (inputInvariant.Equals("eod") ||
+                 inputInvariant.Equals("today") ||
+                 inputInvariant.Equals("t")) dateLocalTime = DateTime.Today.AddTime(TIME_TEMPLATE);
+        else if (inputInvariant.Equals("eow"))
+        {
+            DayOfWeek dow = DateTime.Today.DayOfWeek;
+            // if today is sunday, it's end of next week
+            var offset = 7 - (int)dow;
+            dateLocalTime = DateTime.Today.AddDays(offset).AddTime(TIME_TEMPLATE);
+        }
+        else if (inputInvariant.Equals("eom"))
+        {
+            dateLocalTime = DateTime.Today.AddMonths(1).AddDays(-DateTime.Today.Day).AddTime(TIME_TEMPLATE);
+        }
+        //NOTE: these might intefere with eow, eod, eoy etc!!!!
+        else if (inputInvariant.EndsWith("d") ||
+                 inputInvariant.EndsWith("w"))
+        {
+            bool isWeek = inputInvariant[^1..].Equals("w");
+            var numberPortion = inputInvariant[0..^1];
+
+            if (int.TryParse(numberPortion, out int number))
+            {
+                if (isWeek) number = number * 7;
+                dateLocalTime = DateTime.Today.AddDays(number).AddTime(TIME_TEMPLATE);
+            }
+            //TODO: error handling?
+        }
+        else if (inputInvariant.Length == 4)
+        {
+            // assuming that it's all values
+            // month's starting with leading zeros
+            // using ISO formatting
+            var monthStr = inputInvariant[0..2];
+            var dayStr = inputInvariant[2..];
+
+            //TODO: this can still crash, if it's a invalid month value, i should maybe validate this
+            if (int.TryParse(dayStr, out int day) && int.TryParse(monthStr, out int month))
+            {
+                dateLocalTime = (new DateTime(DateTime.Today.Year, month, day)).AddTime(TIME_TEMPLATE);
+            }
+            //TODO: error handling etc?
+        }
+
+        return dateLocalTime?.ToUniversalTime();
+    }
+
+    public static DateTime AddTime(this DateTime dateTime, DateTime template)
+    {
+        return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, template.Hour, template.Minute, template.Second);
+    }
+
     public static string[] ParseCmdInput(string input)
     {
         List<string> parts = [];

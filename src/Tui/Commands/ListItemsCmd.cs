@@ -39,16 +39,22 @@ public class ListItemsCmd(SttContext db, SttCache cache) : ICommand
 
         AsciiTable table = new();
         //TODO: TUI - add setting max size value as well
-        table.AddColumns(("ID", true), ("Name", false), ("Tags", false), ("Created", true), ("Deadline", true), ("Finished", true));
+        table.AddColumns(("ID", true),
+                         ("Name", false),
+                         ("Tags", false),
+                         ("Created", true),
+                         ("Deadline", true),
+                         ("Finished", true));
         table.AddData(query.Select(i => new object[]
         {
             i.Id,
             //TODO: TUI - make it configurable & depending on max size
             i.Name.Truncate(40,true),
             DisplayTags(tags, i.Tags).Truncate(24,true),
-            i.Created.ToString(SHORT_DATE),
-            i.Deadline != null ? i.Deadline.Value.ToString(SHORT_DATE) : null,
-            i.Finished != null ? i.Finished.Value.ToString(SHORT_DATE) : null
+            //TODO: TUI - handle time conversion better
+            i.Created.ToLocalTime().ToString(SHORT_DATE),
+            i.Deadline != null ? i.Deadline.Value.ToLocalTime().ToString(SHORT_DATE) : null,
+            i.Finished != null ? i.Finished.Value.ToLocalTime().ToString(SHORT_DATE) : null
         }));
         table.Print(DEFAULT_INDENT);
 

@@ -10,8 +10,6 @@ public class FinishCmd(SttContext db) : ICommand
             return;
         }
 
-
-
         if (long.TryParse(args.Span[0], out long id))
         {
             var item = db.Items.SingleOrDefault(i => i.Id == id);

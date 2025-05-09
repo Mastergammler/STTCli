@@ -12,7 +12,8 @@ public class DeadlineCmd(SttContext db) : ICommand
 
         //TODO: SEARCH - i should probably only search open items here?
         // -> How to integrate it generally?
-        var foundItems = db.Items.Where(i => i.Name.ToLower().Contains(searchStr.ToLower()))
+        var foundItems = db.Items.Where(i => i.Finished == null)
+                                 .Where(i => i.Name.ToLower().Contains(searchStr.ToLower()))
                                  .ToArray();
         if (foundItems.Length == 0)
         {
@@ -33,11 +34,18 @@ public class DeadlineCmd(SttContext db) : ICommand
             return;
         }
 
-        //TODO: parse expression properly -> write parser
-        item.Deadline = DateTime.Parse(dateExpr);
+        var deadline = Parsing.ParseDate(dateExpr);
 
-        db.SaveChanges();
+        if (deadline is not null)
+        {
+            item.Deadline = deadline;
+            db.SaveChanges();
 
-        Print($"Added deadline to item: {item.Name}");
+            Print($"Added deadline {deadline} to item: {item.Name}");
+        }
+        else
+        {
+            Print($"Unable to interpret {dateExpr} as a valid date");
+        }
     }
 }
