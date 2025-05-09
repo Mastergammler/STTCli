@@ -68,7 +68,7 @@ public class Repl
     public static string DisplayTags(Tag[] tags, long bitSet)
     {
         var tagNames = tags.Where(t => (t.Bit & bitSet) > 0).Select(t => t.Name).Order();
-        return string.Join(", ", tagNames);
+        return string.Join(" ", tagNames);
     }
     public static void Print(string text)
     {

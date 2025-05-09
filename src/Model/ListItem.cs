@@ -12,6 +12,7 @@ public class ListItem
     public string Name { set; get; }
     public DateTime Created { set; get; }
     public DateTime? Finished { set; get; }
+    public DateTime? Deadline { set; get; }
 
     // Bitset of tags -> up to 64 values
     public long Tags { set; get; }

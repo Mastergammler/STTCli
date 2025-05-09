@@ -8,4 +8,17 @@ public static class Extensions
                 yield return input.Span[i];
         }
     }
+
+    public static string Truncate(this string str, int maxLength, bool withIndicator = true)
+    {
+        if (str.Length > maxLength)
+        {
+            if (withIndicator)
+            {
+                return str[0..(maxLength - 2)] + "..";
+            }
+            return str[0..maxLength];
+        }
+        return str;
+    }
 }

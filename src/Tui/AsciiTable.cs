@@ -72,6 +72,7 @@ public class AsciiTable
             int columnMax = Math.Max(name.Length, maxDataLength);
 
             _columns[ci].MaxWidth = columnMax;
+            _columns[ci].MinWidth = name.Length;
         }
 
         TableRow stylingRow = new TableRow
@@ -81,6 +82,9 @@ public class AsciiTable
             IsStylingRow = true
         };
         TableRow[] tableHeader = [stylingRow, header, stylingRow];
+
+        //TODO: format table based on available space
+        int availableSpace = Console.LargestWindowWidth;
 
         StringBuilder output = new StringBuilder();
         output.AppendLine();
@@ -132,4 +136,5 @@ public class TableColumn
     public string ColumnName { get; init; }
     public bool RightAligned { get; set; } = true;
     public int MaxWidth { get; set; } = 0;
+    public int MinWidth { get; set; }
 }

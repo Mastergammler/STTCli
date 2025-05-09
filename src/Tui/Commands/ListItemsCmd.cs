@@ -36,13 +36,16 @@ public class ListItemsCmd(SttContext db, SttCache cache) : ICommand
         }
 
         AsciiTable table = new();
-        table.AddColumns(("ID", true), ("Name", false), ("Tags", false), ("Created", true), ("Finished", true));
+        //TODO: TUI - add setting max size value as well
+        table.AddColumns(("ID", true), ("Name", false), ("Tags", false), ("Created", true), ("Deadline", true), ("Finished", true));
         table.AddData(query.Select(i => new object[]
         {
             i.Id,
-            i.Name,
-            DisplayTags(tags, i.Tags),
+            //TODO: TUI - make it configurable & depending on max size
+            i.Name.Truncate(40,true),
+            DisplayTags(tags, i.Tags).Truncate(24,true),
             i.Created.ToString(SHORT_DATE),
+            i.Deadline != null ? i.Deadline.Value.ToString(SHORT_DATE) : null,
             i.Finished != null ? i.Finished.Value.ToString(SHORT_DATE) : null
         }));
         table.Print(DEFAULT_INDENT);
