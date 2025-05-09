@@ -30,6 +30,7 @@ public class CommandFactory : ICommandFactory
             Type t when t == typeof(FinishCmd) => new FinishCmd(_db),
             Type t when t == typeof(ShowListCmd) => new ShowListCmd(_db, this),
             Type t when t == typeof(NewFilterCmd) => new NewFilterCmd(_db),
+            Type t when t == typeof(DeadlineCmd) => new DeadlineCmd(_db),
             _ => throw new InvalidOperationException($"Undefined command for type {typeof(T)}")
         };
     }

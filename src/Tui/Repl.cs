@@ -22,6 +22,7 @@ public class Repl
             ["finish"] = factory.Create<FinishCmd>(),
             ["new"] = factory.Create<NewFilterCmd>(),
             ["show"] = factory.Create<ShowListCmd>(),
+            ["deadline"] = factory.Create<DeadlineCmd>(),
             ["exit"] = new QuitCmd(this),
         };
     }
