@@ -38,23 +38,58 @@ public class ListItemsCmd(SttContext db, SttCache cache) : ICommand
         }
 
         AsciiTable table = new();
+
         //TODO: TUI - add setting max size value as well
         table.AddColumns(("ID", true),
                          ("Name", false),
                          ("Tags", false),
-                         ("Created", true),
-                         ("Deadline", true),
-                         ("Finished", true));
+                         ("Created", true));
+        table.AddColumn<DateTime?>("Deadline", true, d => d?.ToLocalTime().ToString(SHORT_DATE),
+                                   new ColumnStyle<DateTime?>()
+                                   {
+                                       //Overdue
+                                       StyleCondition = d => d <= DateTime.UtcNow,
+                                       BackgroundColorId = 52,
+                                       IsRowStyle = true,
+                                       Priority = 9
+                                   },
+                                   new ColumnStyle<DateTime?>()
+                                   {
+                                       // Within 7 days
+                                       StyleCondition = d => d <= DateTime.UtcNow.AddDays(7),
+                                       BackgroundColorId = 58,
+                                       IsRowStyle = true,
+                                       Priority = 8
+                                   },
+                                   new ColumnStyle<DateTime?>()
+                                   {
+                                       // Within 30 days
+                                       StyleCondition = d => d <= DateTime.UtcNow.AddDays(30),
+                                       TextColorId = 178,
+                                       IsRowStyle = true,
+                                       Priority = 7
+                                   });
+        table.AddColumn<DateTime?>("Finished", true, d => d?.ToLocalTime().ToString(SHORT_DATE),
+                                    new ColumnStyle<DateTime?>()
+                                    {
+                                        StyleCondition = d => d is not null,
+                                        BackgroundColorId = 22,
+                                        IsRowStyle = true,
+                                        Priority = 10
+                                    });
+
+        //TODO: need to make this configurable also
+        // -> this should be in column definition, not the table definition ...
         table.AddData(query.Select(i => new object[]
         {
-            i.Id,
+            i.Id,//.ToString().Truncate(4,true),
             //TODO: TUI - make it configurable & depending on max size
-            i.Name.Truncate(40,true),
+            i.Name.Truncate(36,true),
             DisplayTags(tags, i.Tags).Truncate(24,true),
             //TODO: TUI - handle time conversion better
             i.Created.ToLocalTime().ToString(SHORT_DATE),
-            i.Deadline != null ? i.Deadline.Value.ToLocalTime().ToString(SHORT_DATE) : null,
-            i.Finished != null ? i.Finished.Value.ToLocalTime().ToString(SHORT_DATE) : null
+            i.Deadline,
+            i.Finished
         }));
         table.Print(DEFAULT_INDENT);
 

@@ -25,13 +25,29 @@ public class AsciiTable
         foreach (var tuple in names)
         {
             int curIndex = _curColumIndex++;
-            _columns.Add(curIndex, new TableColumn
+            _columns.Add(curIndex, new TableColumn<string>
             {
                 ColumnName = tuple.Item1,
                 ColumnIndex = curIndex,
                 RightAligned = tuple.Item2
             });
         }
+    }
+
+    public void AddColumn<T>(string name,
+                             bool rightAligned,
+                             Func<T, string> contentFormat,
+                             params ColumnStyle<T>[] styles)
+    {
+        int curIndex = _curColumIndex++;
+        _columns.Add(curIndex, new TableColumn<T>
+        {
+            ColumnName = name,
+            ColumnIndex = curIndex,
+            RightAligned = rightAligned,
+            ContentFormat = contentFormat,
+            Styles = styles
+        });
     }
 
     //TODO: how to filter properly, by item types etc?
@@ -67,8 +83,10 @@ public class AsciiTable
 
         for (int ci = 0; ci < _columns.Count; ci++)
         {
-            string name = _columns[ci].ColumnName;
-            int maxDataLength = displayRows.Any() ? displayRows.Max(r => r.ColumnData[ci]?.ToString().Length ?? 1) : 0;
+            var col = _columns[ci];
+
+            string name = col.ColumnName;
+            int maxDataLength = displayRows.Any() ? displayRows.Max(r => col.FormatData(r.ColumnData[ci])?.Length ?? 1) : 0;
             int columnMax = Math.Max(name.Length, maxDataLength);
 
             _columns[ci].MaxWidth = columnMax;
@@ -97,15 +115,46 @@ public class AsciiTable
             string padding = row.IsStylingRow ? stylingPadding : textPadding;
             output.Append(indetation);
 
+            //TODO: ugly, better handling instead of going thorugh it twice?
+            //-> Is it possible?
+            ColumnStyle? rowStyle = null;
             for (int i = 0; i < _columns.Count; i++)
             {
+                ColumnStyle? colStyle = _columns[i].GetStyle(row.ColumnData[i]);
+
+                if (colStyle is not null && colStyle.IsRowStyle)
+                {
+                    if (rowStyle is null || rowStyle.Priority < colStyle.Priority) rowStyle = colStyle;
+                }
+            }
+
+            for (int i = 0; i < _columns.Count; i++)
+            {
+                var col = _columns[i];
+
                 output.Append(separator);
+
+                var style = col.GetStyle(row.ColumnData[i]);
+
+                if (rowStyle is not null)
+                {
+                    if (style is null) style = rowStyle;
+                    // if the prio is the same, we use the row style to have a consistent visual
+                    // if override is desired, the priority should be used!
+                    else if (rowStyle.Priority >= style.Priority) style = rowStyle;
+                }
+                if (style is not null) output.Append(CreateAnsiStyling(style.TextColorId, style.BackgroundColorId));
+
                 output.Append(padding);
                 output.Append(FormatColumnData(row.ColumnData[i], _columns[i]));
                 output.Append(padding);
+
+                // reset colors
+                output.Append(ResetAnsyStyling());
             }
 
-            output.AppendLine(separator);
+            output.Append(separator);
+            output.AppendLine();
         }
 
         Console.WriteLine(output);
@@ -115,9 +164,27 @@ public class AsciiTable
         _filterColumnIdx = 0;
     }
 
+    /// <summary>
+    ///     \u001b[ ANSI start escap sequence
+    ///     38 - set foreground
+    ///     48 - set background
+    ///     5 - use 256 colors
+    /// </summary>
+    private string CreateAnsiStyling(byte? textColorId, byte? bgColorId)
+    {
+        string textStyling = textColorId != null ? $"38;5;{textColorId}" : string.Empty;
+        string bgStyling = bgColorId != null ? $"48;5;{bgColorId}" : string.Empty;
+
+        if (bgStyling.Length > 0 && textStyling.Length > 0) textStyling += ";";
+
+        return $"\u001b[{textStyling}{bgStyling}m";
+    }
+
+    private string ResetAnsyStyling() => "\u001b[0m";
+
     private string FormatColumnData(object data, TableColumn columnInfo)
     {
-        string text = data?.ToString() ?? NO_DATA;
+        string text = columnInfo.FormatData(data) ?? NO_DATA;
         return columnInfo.RightAligned ? text.PadLeft(columnInfo.MaxWidth) : text.PadRight(columnInfo.MaxWidth);
     }
 }
@@ -130,11 +197,66 @@ public class TableRow
     public bool IsStylingRow { get; set; } = false;
 }
 
-public class TableColumn
+public abstract class TableColumn
 {
     public int ColumnIndex { get; init; }
     public string ColumnName { get; init; }
     public bool RightAligned { get; set; } = true;
     public int MaxWidth { get; set; } = 0;
     public int MinWidth { get; set; }
+
+    public abstract ColumnStyle? GetStyle(object data);
+    public abstract string? FormatData(object data);
+}
+
+public class TableColumn<T> : TableColumn
+{
+    public static readonly Type DataType = typeof(T);
+    public Func<T, string> ContentFormat { get; set; } = t => t.ToString();
+    public ColumnStyle<T>[] Styles = [];
+
+    //PERF: i'm going through this then for every row?
+    // - but it's not preventable because of different data?
+    public override ColumnStyle? GetStyle(object data)
+    {
+        //TODO: this might hide errors, when 2 conditions apply with the same priority
+        // -> Should i have a stronger error handling here?
+        if (data is T typedData)
+        {
+            return Styles.OrderByDescending(s => s.Priority)
+                         .FirstOrDefault(s => s.StyleCondition(typedData));
+        }
+        return null;
+    }
+
+    //TODO: refactor - ugly
+    public override string? FormatData(object? data)
+    {
+        if (data is null) return null;
+        if (data is T typedData) return ContentFormat(typedData);
+        if (data is string str) return str;
+        if (data is Int64 i) return i.ToString();
+        throw new InvalidCastException($"Expected data of type {DataType.Name} but found {data.GetType().Name}");
+    }
+}
+
+//TODO: refactor: having a generic structure inside this other generic structure is quite complicated
+// -> maybe there is a simpler solution?
+public abstract class ColumnStyle
+{
+    public const byte DefaultTextColor = 15;
+    public const byte DefaultBgColor = 0;
+
+    // should this override other row styles or not?
+    public byte Priority { get; set; }
+
+    // should this style be applied to the whole row instead of the jsut the 
+    public bool IsRowStyle { get; set; }
+    public byte? TextColorId { get; set; }
+    public byte? BackgroundColorId { get; set; }
+}
+
+public class ColumnStyle<T> : ColumnStyle
+{
+    public Func<T, bool> StyleCondition { get; set; } = t => false;
 }
