@@ -16,13 +16,17 @@ public class Repl
         _commands = new()
         {
             ["stats"] = factory.Create<DbStatsCmd>(),
+            ["show"] = factory.Create<ShowListCmd>(),
             ["list"] = factory.Create<ListCmd>(),
+
             ["add"] = factory.Create<CreateItemCmd>(),
+            ["new"] = factory.Create<NewFilterCmd>(),
+
+            ["edit"] = factory.Create<EditCmd>(),
             ["delete"] = factory.Create<DeleteItemCmd>(),
             ["finish"] = factory.Create<FinishCmd>(),
-            ["new"] = factory.Create<NewFilterCmd>(),
-            ["show"] = factory.Create<ShowListCmd>(),
             ["deadline"] = factory.Create<DeadlineCmd>(),
+
             ["exit"] = new QuitCmd(this),
         };
     }
