@@ -1,13 +1,14 @@
 using static Repl;
 
-public class ListItemsCmd(SttContext db, SttCache cache) : ICommand
+public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
 {
     public void Execute(Memory<string> args)
     {
         //PERF: can i cache these somewhere, instead doing this for every call?
         // Or does EF already handle caching for those quite well?
         var tags = db.Tags.ToArray();
-        IQueryable<ListItem> query = db.Items.OrderByDescending(i => i.Finished)
+        IQueryable<ListItem> query = db.Items.Where(i => i.Level == level)
+                                             .OrderByDescending(i => i.Finished)
                                              .ThenByDescending(i => i.Deadline != null)
                                              .ThenBy(i => i.Deadline);
 

@@ -19,13 +19,13 @@ public class Repl
             ["show"] = factory.Create<ShowListCmd>(),
             ["list"] = factory.Create<ListCmd>(),
 
-            ["add"] = factory.Create<CreateItemCmd>(),
-            ["new"] = factory.Create<NewFilterCmd>(),
-
+            ["add"] = factory.Create<CreateCmd>(),
             ["edit"] = factory.Create<EditCmd>(),
             ["delete"] = factory.Create<DeleteItemCmd>(),
             ["finish"] = factory.Create<FinishCmd>(),
             ["deadline"] = factory.Create<DeadlineCmd>(),
+            ["connect"] = factory.Create<ConnectCmd>(),
+            ["project"] = factory.Create<ShowProjectItemsCmd>(),
 
             ["exit"] = new QuitCmd(this),
         };

@@ -1,0 +1,1 @@
+public class ListProjectsCmd(SttContext db, SttCache cache) : ListItemsCmd(db, cache, 1) { }

@@ -20,12 +20,18 @@ public class CommandFactory : ICommandFactory
         return typeof(T) switch
         {
             Type t when t == typeof(ListCmd) => new ListCmd(this),
-            Type t when t == typeof(ListItemsCmd) => new ListItemsCmd(_db, _cache),
+            Type t when t == typeof(ListItemsCmd) => new ListItemsCmd(_db, _cache, 0),
+            Type t when t == typeof(ListProjectsCmd) => new ListProjectsCmd(_db, _cache),
             Type t when t == typeof(ListRecentCmd) => new ListRecentCmd(_cache),
             Type t when t == typeof(ListFiltersCmd) => new ListFiltersCmd(_db),
             Type t when t == typeof(ListTagsCmd) => new ListTagsCmd(_db),
             Type t when t == typeof(DbStatsCmd) => new DbStatsCmd(_db),
-            Type t when t == typeof(CreateItemCmd) => new CreateItemCmd(_repo),
+            Type t when t == typeof(ShowProjectItemsCmd) => new ShowProjectItemsCmd(_db),
+
+            Type t when t == typeof(CreateCmd) => new CreateCmd(this),
+            Type t when t == typeof(ConnectCmd) => new ConnectCmd(_db, _repo),
+            Type t when t == typeof(NewItemCmd) => new NewItemCmd(_repo, 0),
+            Type t when t == typeof(NewProjectCmd) => new NewProjectCmd(_repo),
             Type t when t == typeof(DeleteItemCmd) => new DeleteItemCmd(_db),
             Type t when t == typeof(FinishCmd) => new FinishCmd(_db),
             Type t when t == typeof(ShowListCmd) => new ShowListCmd(_db, this),

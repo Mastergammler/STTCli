@@ -1,8 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+
 public class SttRepository(SttContext db)
 {
     private long _previousLatestTag = 0;
 
-    public string CreateItem(string name, string[] tags)
+    public string CreateItem(string name, string[] tags, int level)
     {
         long itemTags = 0;
         if (tags.Any())
@@ -20,7 +22,8 @@ public class SttRepository(SttContext db)
         {
             Name = name,
             Created = DateTime.UtcNow,
-            Tags = itemTags
+            Tags = itemTags,
+            Level = level
         };
         db.Add(item);
         db.SaveChanges();
@@ -61,5 +64,16 @@ public class SttRepository(SttContext db)
         _previousLatestTag = bit;
 
         return entity;
+    }
+
+    public string Connect(ListItem project, ListItem item, bool force = false)
+    {
+        var itemWithParent = db.Items.Include(i => i.Parent).Single(i => i.Id == item.Id);
+        if (itemWithParent.Parent is not null && !force) return $"Item is already connected to project {itemWithParent.Parent.Name}";
+
+        itemWithParent.Parent = project;
+        db.SaveChanges();
+
+        return $"Successfully connected item {item.Id} with project {project.Id}";
     }
 }

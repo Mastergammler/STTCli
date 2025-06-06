@@ -8,6 +8,9 @@ public class ListItem
     [NotMapped]
     public bool IsFinished => Finished is not null;
 
+    [NotMapped]
+    public bool IsLeaf => Level == 0;
+
     public long Id { set; get; }
     public string Name { set; get; }
     public DateTime Created { set; get; }
@@ -17,14 +20,10 @@ public class ListItem
     // Bitset of tags -> up to 64 values
     public long Tags { set; get; }
 
-    //TODO: Project?
+    // Parent node of this item
+    public ListItem? Parent { set; get; }
 
-    //TODO: Different types of tags? Is this necessary?
-
-    //TODO: State tag? Do i want to differentiate between state & Category tags?
-
-    //TODO: Priority: I would like this to sort by it
-    //- the general question becomes, do i want to be super universal -> tag by everything
-    //- or do i want to have different categories?
-    //- tags are generally not good for sorting, you can do a tag order, but it's a bit akward
+    // Level of this node, where 0 is the leaf, 1 is the project above,
+    // 2 would be project of projects etc
+    public int Level { set; get; }
 }
