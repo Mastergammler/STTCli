@@ -9,26 +9,17 @@ public class Repl
 
     bool is_running = true;
 
-    private Dictionary<string, ICommand> _commands;
+    private string input_prefix = INPUT_CHARS;
+    private ICommand _evalCommand;
+    private ICommand _defaultCommand;
+    private ICommandFactory _factory;
 
     public Repl(ICommandFactory factory)
     {
-        _commands = new()
-        {
-            ["stats"] = factory.Create<DbStatsCmd>(),
-            ["show"] = factory.Create<ShowListCmd>(),
-            ["list"] = factory.Create<ListCmd>(),
-
-            ["add"] = factory.Create<CreateCmd>(),
-            ["edit"] = factory.Create<EditCmd>(),
-            ["delete"] = factory.Create<DeleteItemCmd>(),
-            ["finish"] = factory.Create<FinishCmd>(),
-            ["deadline"] = factory.Create<DeadlineCmd>(),
-            ["connect"] = factory.Create<ConnectCmd>(),
-            ["project"] = factory.Create<ShowProjectItemsCmd>(),
-
-            ["exit"] = new QuitCmd(this),
-        };
+        _factory = factory;
+        _factory.Init(this);
+        _defaultCommand = _factory.Create<ReplCommands>();
+        _evalCommand = _defaultCommand;
     }
 
     public void MainLoop()
@@ -37,10 +28,22 @@ public class Repl
 
         while (is_running)
         {
-            Console.Write(">> ");
+            Console.Write(input_prefix);
             var input = Console.ReadLine();
             Eval(input);
         }
+    }
+
+    public void SetInputMode<T>(string inputName) where T : ICommand
+    {
+        input_prefix = $"{inputName} >> ";
+        _evalCommand = _factory.Create<T>();
+    }
+
+    public void ResetInputMode()
+    {
+        input_prefix = INPUT_CHARS;
+        _evalCommand = _defaultCommand;
     }
 
     public void Eval(string input)
@@ -48,25 +51,12 @@ public class Repl
         string[] cmd = ParseCmdInput(input);
         if (cmd.Length == 0) return;
 
-        if (_commands.ContainsKey(cmd[0]))
-        {
-            _commands[cmd[0]].Execute(cmd.AsMemory(1));
-        }
-        else
-        {
-            Print($"Unknown command: '{cmd[0]}'");
-            Print($"Available options are:\n{"".PadLeft(DEFAULT_INDENT)}{string.Join($"\n{"".PadLeft(DEFAULT_INDENT)}", _commands.Keys)}");
-        }
+        _evalCommand.Execute(cmd.AsMemory());
     }
 
-    private class QuitCmd(Repl parent) : ICommand
+    public void Exit()
     {
-        public void Execute(Memory<string> args)
-        {
-            //FIXME: i might wanna have this, even thou i still save on every change atm
-            //parent.Db.SaveChanges();
-            parent.is_running = false;
-        }
+        is_running = false;
     }
 
     // UTIL
@@ -75,9 +65,29 @@ public class Repl
         var tagNames = tags.Where(t => (t.Bit & bitSet) > 0).Select(t => t.Name).Order();
         return string.Join(" ", tagNames);
     }
+
     public static void Print(string text)
     {
         string placeholder = " ";
         Console.WriteLine($"{placeholder.PadLeft(INPUT_CHARS.Length, ' ')}{text}");
+    }
+
+    public static bool ValidateSingleMatch<T>(string searchStr, IEnumerable<T> items, Func<T, string> nameSelector)
+    {
+        bool singleMatch = true;
+
+        if (items.Count() == 0)
+        {
+            Print($"No match found for name '{searchStr}'");
+            singleMatch = false;
+        }
+        else if (items.Count() > 1)
+        {
+            string matches = string.Join("\n - ", items.Select(nameSelector));
+            Print($"Found multiple matches:\n - {matches}");
+            singleMatch = false;
+        }
+
+        return singleMatch;
     }
 }

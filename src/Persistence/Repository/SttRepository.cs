@@ -4,7 +4,7 @@ public class SttRepository(SttContext db)
 {
     private long _previousLatestTag = 0;
 
-    public string CreateItem(string name, string[] tags, int level)
+    public string CreateItem(string name, string[] tags, int level, long? parentId = null)
     {
         long itemTags = 0;
         if (tags.Any())
@@ -23,7 +23,8 @@ public class SttRepository(SttContext db)
             Name = name,
             Created = DateTime.UtcNow,
             Tags = itemTags,
-            Level = level
+            Level = level,
+            ParentId = parentId
         };
         db.Add(item);
         db.SaveChanges();

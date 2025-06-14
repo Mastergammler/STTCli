@@ -21,4 +21,12 @@ public static class Extensions
         }
         return str;
     }
+
+    public static string With(this string str, params object[] args) => string.Format(str, args);
+
+
+    public static Result<IEnumerable<T>> FindArg<T>(this Memory<T> input, Func<T, bool> predicate)
+    {
+        return new Success<IEnumerable<T>>(input.Where(predicate));
+    }
 }

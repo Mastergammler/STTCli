@@ -1,38 +1,47 @@
 
 using static Repl;
 
-public class ShowProjectItemsCmd(SttContext db) : ICommand
+public class ShowProjectItemsCmd(ProjectRepository projects, TagRepository tags, UiContext ctx) : ICommand
 {
     public void Execute(Memory<string> args)
     {
-        if (args.Length < 1 || args.Span.Contains("help"))
+        long? projectId = null;
+        if (args.Length == 0 && ctx.CurrentProject is not null)
+        {
+            projectId = ctx.CurrentProject.Id;
+        }
+        else if (args.Length < 1 || args.Span.Contains("help"))
         {
             Print("Usage: project <projectName>");
             return;
         }
 
-        string projectName = args.Span[0].ToLower();
+        string projectName;
+        IEnumerable<ListItem> entities;
 
-        var entities = db.Projects.Where(p => p.Name.ToLower().Contains(projectName));
-        if (!entities.Any())
+        if (projectId is not null)
         {
-            Print($"No matches fournd for '{projectName}'");
-        }
-        else if (entities.Count() > 1)
-        {
-            Print($"Multiple matches found:\n{string.Join("\n - ", entities.Select(e => e.Name))}");
+            projectName = ctx.CurrentProject.Name;
+            entities = [projects.Get(projectId.Value)];
         }
         else
         {
+            projectName = args.Span[0];
+            entities = projects.FindByName(projectName);
+        }
+
+        if (ValidateSingleMatch(projectName, entities, e => e.Name))
+        {
             var project = entities.Single();
-            var tasks = db.Tasks.Where(p => p.Parent == project).ToArray();
+            var tasks = projects.FindTasks(project);
+
             var finishedTasks = tasks.Where(t => t.IsFinished).Count();
+            double percentage = Math.Round((float)finishedTasks / tasks.Count() * 100, 2);
 
             Print("");
-            Print($"[{project.Name}] - {finishedTasks}/{tasks.Count()}");
+            Print($"[{project.Name}] - {finishedTasks}/{tasks.Count()} ({percentage}%)");
 
             //TODO: refactor, not pretty, duplicate from list items cmd
-            var tags = db.Tags.ToArray();
             AsciiTable table = new();
 
             table.AddColumns(("Name", false),
@@ -49,7 +58,7 @@ public class ShowProjectItemsCmd(SttContext db) : ICommand
             table.AddData(tasks.Select(i => new object[]
             {
                 i.Name.Truncate(36,true),
-                DisplayTags(tags, i.Tags).Truncate(24,true),
+                DisplayTags(tags.All(), i.Tags).Truncate(24,true),
                 i.Finished
             }));
             table.Print(DEFAULT_INDENT);

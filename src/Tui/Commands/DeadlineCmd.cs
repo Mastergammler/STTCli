@@ -1,51 +1,39 @@
 using static Repl;
+using static Symbols;
 
-public class DeadlineCmd(SttContext db) : ICommand
+record SetDeadlineOpt(IEnumerable<ListItem> items, DateTime deadline, bool force);
+
+public class DeadlineCmd(ItemService service) : ICommand
 {
     public void Execute(Memory<string> args)
     {
-        if (args.Length < 2) { Print("Usage: deadline <searchStr> <date> [-force]"); return; }
+        if (args.ShowHelp($"Usage: deadline <$id|keyword> <dateExpr> [{OVERRIDE_ARG}] [{BULK_ARG}]", 2)) return;
+
+        bool forceOverride = args.Span.Contains(OVERRIDE_ARG);
+        bool allowBulk = args.Span.Contains(BULK_ARG);
 
         string searchStr = args.Span[0];
         string dateExpr = args.Span[1];
-        bool forceOverride = args.Span.Contains("-force");
 
-        //TODO: SEARCH - i should probably only search open items here?
-        // -> How to integrate it generally?
-        var foundItems = db.Items.Where(i => i.Finished == null)
-                                 .Where(i => i.Name.ToLower().Contains(searchStr.ToLower()))
-                                 .ToArray();
-        if (foundItems.Length == 0)
-        {
-            Print($"No items matching search string '{searchStr}'");
-            return;
-        }
-        else if (foundItems.Length > 1)
-        {
-            Print("Found more than 1 item, search needs to be more specific!");
-            return;
-        }
+        var deadlineResult = Source.Of(dateExpr).MapNotNull(Parsing.ParseDate, e => INVALID_DATE_ERR.With(e));
+        service.FindItems(new(searchStr, allowBulk))
+               .Combine(deadlineResult, (i, d) => new SetDeadlineOpt(i, d, forceOverride))
+               .Execute(SetDeadline);
+    }
 
-        var item = foundItems.Single();
+    // NOTE: D01 
+    private void SetDeadline(SetDeadlineOpt inputs)
+    {
+        var group = inputs.items.ToLookup(i => i.Deadline != null && !inputs.force);
+        var withoutDeadline = group[false];
 
-        if (item.Deadline is not null && !forceOverride)
+        foreach (var item in withoutDeadline) item.Deadline = inputs.deadline;
+        foreach (var item in group[true])
         {
-            Print($"Item with id {item.Id} already has a deadline. Use -force to override!");
-            return;
+            Print($"[!] Item {item.Id} has already a deadline. (Use {OVERRIDE_ARG} to override)");
         }
 
-        var deadline = Parsing.ParseDate(dateExpr);
-
-        if (deadline is not null)
-        {
-            item.Deadline = deadline;
-            db.SaveChanges();
-
-            Print($"Added deadline {deadline} to item: {item.Name}");
-        }
-        else
-        {
-            Print($"Unable to interpret {dateExpr} as a valid date");
-        }
+        service.SaveChanges();
+        Print($"Updated {withoutDeadline.Count()}/{inputs.items.Count()} items {withoutDeadline.Ids()}");
     }
 }
