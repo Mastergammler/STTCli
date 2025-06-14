@@ -1,1 +1,1 @@
-public class NewProjectCmd(SttRepository repo) : NewItemCmd(repo, 1) { }
+public class NewProjectCmd(SttRepository repo, UiContext ctx) : NewItemCmd(repo, ctx, 1) { }

@@ -46,7 +46,7 @@ public class ListProjectsCmd(SttContext db, SttCache cache) : ICommand
                                      ProjectId = g.Key,
                                      Finished = g.Count(i => i.Finished != null),
                                      Count = g.Count(),
-                                     Percentage = Math.Round((float)g.Count(i => i.Finished != null) / g.Count(), 2)
+                                     Percentage = Math.Round((float)g.Count(i => i.Finished != null) / g.Count() * 100, 2)
                                  })
                                  .ToDictionary(i => i.ProjectId);
 

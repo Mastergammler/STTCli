@@ -1,78 +1,55 @@
 
 using static Repl;
+using static Symbols;
 
-public class EditItemsCmd(SttContext db, SttRepository repo) : ICommand
+public class EditItemsCmd(ItemService service, TagRepository tags) : ICommand
 {
     public void Execute(Memory<string> args)
     {
-        if (args.Length < 1 || args.Span.Contains("help"))
-        {
-            Print("Usage: <item name> [-f] [-b] ['>> <New Name>'] [#<newTag>] [-#<removeTag>]");
-            return;
-        }
+        if (args.ShowHelp($"Usage: <{S_ID}id|keyword> [{BULK_ARG}] [{FINISHED_ARG}] " +
+                          $"['{S_NAME} <New Name>'] [{S_TAG}<newTag>] [{S_REM_TAG}<removeTag>]")) return;
+
+        bool allowBulk = args.Span.Contains(BULK_ARG);
+        bool includeFinished = args.Span.Contains(FINISHED_ARG);
 
         string searchStr = args.Span[0];
 
-        var tags = db.Tags.ToArray();
-        IQueryable<ListItem> query = db.Items.Where(i => i.Name.ToLower().Contains(searchStr.ToLower()));
+        service.FindItems(new(searchStr, allowBulk, includeFinished))
+               .Execute(i => UpdateItemsData(i, args.Span));
+    }
 
-        if (!args.Span.Contains("-f")) query = query.Where(i => i.Finished == null);
-
-        var items = query.ToArray();
-
-        if (items.Length == 0)
-        {
-            Print($"No items found with name '{searchStr}'");
-            return;
-        }
-        else if (items.Length > 1 && !args.Span.Contains("-b"))
-        {
-            Print($"Found multiple items, but bulk option ('-b') not specified:\n - {string.Join("\n - ", items.Select(i => i.Name))}");
-            return;
-        }
-
+    private void UpdateItemsData(IEnumerable<ListItem> found, Span<string> args)
+    {
         ICollection<string> addTags = [];
         ICollection<string> removeTags = [];
         string? newName = null;
 
-        foreach (string s in args.Span)
+        foreach (string s in args)
         {
-            if (s.StartsWith(">>"))
+            if (s.StartsWith(S_NAME))
             {
                 var name = s[2..].Trim();
                 if (newName != null)
                 {
-                    Print($"Multiple names given, chosing '{name}'");
+                    //TODO: REF - Should not be allowed ond throw an error instead
+                    Print($"[!] Multiple names given, chosing '{name}'");
                 }
                 newName = name;
             }
-            else if (s.StartsWith("#"))
-            {
-                addTags.Add(s);
-            }
-            else if (s.StartsWith("-#"))
-            {
-                removeTags.Add(s[1..]);
-            }
+            else if (s.StartsWith(S_TAG)) addTags.Add(s);
+            else if (s.StartsWith(S_REM_TAG)) removeTags.Add(s[1..]);
         }
 
-        var removeBitset = removeTags.Select(n => tags.FirstOrDefault(t => t.Name.Equals(n)))
-                                     .Where(t => t is not null)
-                                     .Aggregate(0L, (a, t) => a | t.Bit);
-        var groups = addTags.Select(n => new { Tag = tags.FirstOrDefault(t => t.Name.Equals(n)), Name = n })
-                            .ToLookup(i => i.Tag is not null);
+        var tagUpdate = new TagUpdate(tags);
+        tagUpdate.Prepare(addTags, removeTags);
 
-        var addBitset = groups[true].Aggregate(0L, (a, i) => a | i.Tag.Bit);
-        addBitset |= groups[false].Select(n => repo.CreateNextTag(n.Name)).Aggregate(0L, (a, t) => a | t.Bit);
-
-        foreach (var item in items)
+        foreach (var item in found)
         {
             if (newName is not null) item.Name = newName;
-            item.Tags = item.Tags & ~removeBitset;
-            item.Tags = item.Tags | addBitset;
+            tagUpdate.ApplyTo(item);
         }
 
-        db.SaveChanges();
-        Print($"Updated {items.Length} item(s)");
+        service.SaveChanges();
+        Print($"Updated {found.Count()} item(s) ({found.Ids()})");
     }
 }

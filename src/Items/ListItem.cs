@@ -21,6 +21,7 @@ public class ListItem
     public long Tags { set; get; }
 
     // Parent node of this item
+    public long? ParentId { set; get; }
     public ListItem? Parent { set; get; }
 
     // Level of this node, where 0 is the leaf, 1 is the project above,
