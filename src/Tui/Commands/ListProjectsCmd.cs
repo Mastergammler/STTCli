@@ -1,5 +1,6 @@
 
 using static Repl;
+using static Symbols;
 
 public class ListProjectsCmd(SttContext db, SttCache cache) : ICommand
 {

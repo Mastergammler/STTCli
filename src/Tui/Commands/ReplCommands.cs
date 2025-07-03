@@ -1,5 +1,3 @@
-using static Repl;
-
 public class ReplCommands(ICommandFactory factory, Repl repl) : SubCommand
 {
     protected override void InitCommands()
@@ -8,7 +6,7 @@ public class ReplCommands(ICommandFactory factory, Repl repl) : SubCommand
         _commands["show"] = factory.Create<ShowListCmd>();
         _commands["list"] = factory.Create<ListCmd>();
 
-        _commands["add"] = factory.Create<CreateCmd>();
+        _commands["new"] = factory.Create<CreateCmd>();
         _commands["edit"] = factory.Create<EditCmd>();
         _commands["delete"] = factory.Create<DeleteItemCmd>();
         _commands["finish"] = factory.Create<FinishCmd>();
@@ -16,15 +14,11 @@ public class ReplCommands(ICommandFactory factory, Repl repl) : SubCommand
         _commands["connect"] = factory.Create<ConnectCmd>();
         _commands["project"] = factory.Create<ProjectContextCmd>();
 
-        _commands["exit"] = new QuitCmd(repl);
-    }
+        // time tracking
+        _commands["start"] = factory.Create<StartTrackingCmd>();
+        _commands["stop"] = factory.Create<StopTrackingCmd>();
+        _commands["tracking"] = factory.Create<TrackingInfoCmd>();
 
-    private class QuitCmd(Repl parent) : ICommand
-    {
-        public void Execute(Memory<string> args)
-        {
-            if (args.ShowHelp("quits the cli", 0)) return;
-            parent.Exit();
-        }
+        _commands["exit"] = factory.Create<QuitCmd>();
     }
 }

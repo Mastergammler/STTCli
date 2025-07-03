@@ -1,10 +1,9 @@
 using static Parsing;
+using static Symbols;
 
 public class Repl
 {
     public const string INPUT_CHARS = ">> ";
-    public const string DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-    public const string SHORT_DATE = "dd MMM HH:mm";
     public const int DEFAULT_INDENT = 4;
 
     bool is_running = true;
@@ -26,10 +25,13 @@ public class Repl
     {
         Console.WriteLine("***  Welcome to the ScheduleTimerTask CLI  ***");
 
+        var cmd = _factory.Create<TrackingInfoCmd>();
+        cmd.Execute(new string[] { SILENT_ARG }.AsMemory());
+
         while (is_running)
         {
             Console.Write(input_prefix);
-            var input = Console.ReadLine();
+            var input = Console.ReadLine() ?? string.Empty;
             Eval(input);
         }
     }

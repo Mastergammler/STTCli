@@ -5,11 +5,13 @@ public class ProjectCommands(ICommandFactory factory, UiContext ctx, Repl repl) 
     protected override void InitCommands()
     {
         _commands["info"] = factory.Create<ShowProjectItemsCmd>();
+        _commands["start"] = factory.Create<StartTrackingCmd>();
         _commands["finish"] = factory.Create<FinishCmd>();
         _commands["deadline"] = factory.Create<DeadlineCmd>();
-        _commands["create"] = factory.Create<NewItemCmd>();
+        _commands["new"] = factory.Create<NewItemCmd>();
         _commands["edit"] = factory.Create<EditItemsCmd>();
         _commands["exit"] = new QuitCmd(repl, ctx);
+
     }
 
     private class QuitCmd(Repl parent, UiContext state) : ICommand
