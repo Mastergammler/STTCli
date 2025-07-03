@@ -15,6 +15,8 @@ public class CommandFactory : ICommandFactory
     private ProjectRepository _projects;
     private ItemRepository _items;
     private ItemService _itemService;
+    private TimeService _timeService;
+    private TimeRepository _timeRepository;
     private SttCache _cache = new();
 
     private UiContext _context = new();
@@ -27,6 +29,8 @@ public class CommandFactory : ICommandFactory
         _projects = new ProjectRepository(_db);
         _items = new ItemRepository(_db);
         _itemService = new ItemService(_items, _context);
+        _timeRepository = new TimeRepository(_db);
+        _timeService = new TimeService(_timeRepository, _db);
     }
 
     public void Init(Repl repl)
@@ -42,6 +46,7 @@ public class CommandFactory : ICommandFactory
         return typeof(T) switch
         {
             Type t when t == typeof(ReplCommands) => new ReplCommands(this, _repl),
+            Type t when t == typeof(QuitCmd) => new QuitCmd(_repl, _timeService, _timeRepository),
 
             Type t when t == typeof(ListCmd) => new ListCmd(this),
             Type t when t == typeof(ListItemsCmd) => new ListItemsCmd(_db, _cache, 0),
@@ -66,6 +71,10 @@ public class CommandFactory : ICommandFactory
             Type t when t == typeof(DeadlineCmd) => new DeadlineCmd(_itemService),
             Type t when t == typeof(EditCmd) => new EditCmd(this),
             Type t when t == typeof(EditItemsCmd) => new EditItemsCmd(_itemService, _tags),
+
+            Type t when t == typeof(StartTrackingCmd) => new StartTrackingCmd(_itemService, _timeService),
+            Type t when t == typeof(StopTrackingCmd) => new StopTrackingCmd(_timeService),
+            Type t when t == typeof(TrackingInfoCmd) => new TrackingInfoCmd(_timeRepository),
 
             _ => throw new InvalidOperationException($"Undefined command for type {typeof(T)}")
         };

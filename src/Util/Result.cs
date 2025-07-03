@@ -45,6 +45,17 @@ public static class ResultExtensions
         }
     }
 
+    public static Result<T> Single<T>(this Result<IEnumerable<T>> result)
+    {
+        return result switch
+        {
+            Success<IEnumerable<T>> s when s.value.Count() == 1 => new Success<T>(s.value.Single()),
+            Success<IEnumerable<T>> s => new Failure<T>($"Did expect a single item but found {s.value.Count()} instead."),
+            Failure<IEnumerable<T>> f => new Failure<T>(f.Error),
+            _ => throw new NotImplementedException($"Handling not implemented for type: {result.GetType().Name}")
+        };
+    }
+
     public static Result<TOut> OneOrDefault<TIn, TOut>(this Result<IEnumerable<TIn>> result,
                                                        Func<TIn, TOut> ifOne,
                                                        TOut defaultValue)

@@ -1,5 +1,6 @@
 
 using static Repl;
+using static Symbols;
 
 public class ShowProjectItemsCmd(ProjectRepository projects, TagRepository tags, UiContext ctx) : ICommand
 {

@@ -1,4 +1,5 @@
 using static Repl;
+using static Symbols;
 
 public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
 {
