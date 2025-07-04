@@ -22,5 +22,13 @@ public class TimeRepository(SttContext db)
                                                                      .Where(e => e.End == null)
                                                                      .ToArray();
 
+    //TODO: TT - handle entries over night
+    public IEnumerable<TimeEntry> FindItemsWithin(DateTime startTime, DateTime endTime)
+    {
+        return db.TimeEntries.Include(e => e.Item)
+                             .Where(e => e.Start >= startTime && e.Start <= endTime)
+                             .ToArray();
+    }
+
     public void Commit() => db.SaveChanges();
 }

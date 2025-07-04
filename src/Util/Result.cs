@@ -1,3 +1,5 @@
+using static Symbols;
+
 public abstract record Result<T>;
 public record Success<T>(T value) : Result<T>;
 public record Failure<T>(string Error) : Result<T>;
@@ -5,6 +7,13 @@ public record Failure<T>(string Error) : Result<T>;
 public static class Source
 {
     public static Result<T> Of<T>(T value) => new Success<T>(value);
+}
+
+public static class Result
+{
+    public static Success<T> Value<T>(T value) => new Success<T>(value);
+    public static Failure<T> Fail<T>(string msg) => new Failure<T>(msg);
+    public static Failure<T> Fail<T>(T value, string msg) => new Failure<T>(msg);
 }
 
 public static class ResultExtensions
@@ -128,7 +137,7 @@ public static class ResultExtensions
 
         string errorMsg;
 
-        if (e1 is not null && e2 is not null) errorMsg = $"{e1}NL{e2}";
+        if (e1 is not null && e2 is not null) errorMsg = $"{e1}{NL}{e2}";
         else if (e1 is not null) errorMsg = e1;
         else if (e2 is not null) errorMsg = e2;
         else
