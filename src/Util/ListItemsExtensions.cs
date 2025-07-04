@@ -2,11 +2,23 @@ using static Symbols;
 
 public static class ListItemExtensions
 {
-
     public static string TimeDiff(this DateTime time)
     {
         var span = DateTime.UtcNow - time;
-        return $"{(int)span.TotalHours:D2}:{(int)span.Minutes:D2} h";
+        return span.Format();
+    }
+
+    public static string Format(this TimeSpan span)
+    {
+        if (span.Hours > 0)
+        {
+            string hours = (span.Hours).ToString().PadLeft(2, ' ');
+            return $"{hours}:{span.Minutes:D2} h";
+        }
+        else
+        {
+            return $"   {span.Minutes.ToString().PadLeft(2, '0')} m";
+        }
     }
 
     public static string Names(this IEnumerable<ListItem> items)

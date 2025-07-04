@@ -75,6 +75,7 @@ public class CommandFactory : ICommandFactory
             Type t when t == typeof(StartTrackingCmd) => new StartTrackingCmd(_itemService, _timeService),
             Type t when t == typeof(StopTrackingCmd) => new StopTrackingCmd(_timeService),
             Type t when t == typeof(TrackingInfoCmd) => new TrackingInfoCmd(_timeRepository),
+            Type t when t == typeof(TimeOverviewCmd) => new TimeOverviewCmd(_timeRepository),
 
             _ => throw new InvalidOperationException($"Undefined command for type {typeof(T)}")
         };

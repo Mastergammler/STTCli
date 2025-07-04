@@ -1,6 +1,62 @@
+using static Symbols;
+
+public record TimePeriod(DateTime start, DateTime end);
+
 public static class Parsing
 {
     public static readonly DateTime TIME_TEMPLATE = new DateTime(1, 1, 1, 23, 0, 0);
+
+    public static Result<int> PositiveResult(this string numStr)
+    {
+        if (int.TryParse(numStr, out int num))
+        {
+            return num >= 0 ? new Success<int>(num) : new Failure<int>(REQ_POS_NUM_ERR.With(num));
+        }
+
+        return new Failure<int>(INVALID_NUM_ERR.With(numStr));
+    }
+
+    public static Result<int> ParseInt(this string numStr, Func<int, bool> validator)
+    {
+        if (int.TryParse(numStr, out int num))
+        {
+            return validator(num) ? new Success<int>(num) : new Failure<int>(NUM_VALIDATION_ERR.With(num));
+        }
+        return new Failure<int>(INVALID_NUM_ERR.With(numStr));
+    }
+
+    public static Result<DateTime> DateResult(this string dateStr)
+    {
+        if (DateTime.TryParse(dateStr, out DateTime parsed))
+        {
+            return Result.Value(parsed);
+        }
+        return Result.Fail(parsed, INVALID_DATE_ERR.With(dateStr));
+    }
+
+    public static Result<TimePeriod> ParseTimespan(string timespanExpr, DateTime? dateToday = null)
+    {
+        //TODO: Time - is this the best way to handle date usage?
+        // -> Also possible error for UTC edge case? (I guess not that relevant)
+        var today = dateToday?.Date ?? DateTime.UtcNow.Date;
+
+        var seq = new SequenceBuilder(timespanExpr);
+        ITimespanParsingStrategy strategy = seq.Pattern switch
+        {
+            ErrorResultParser.Pattern => new ErrorResultParser(),
+            TimespanKeywordParser.Pattern => new TimespanKeywordParser(today),
+            DayspanParser.Pattern => new DayspanParser(today),
+            IsoDateParser.Pattern => new IsoDateParser(today),
+            YearDateParser.Pattern => new YearDateParser(today),
+            SingleNumberParser.Pattern => new SingleNumberParser(today),
+            QuarterParser.PatternShort or
+            QuarterParser.PatternLong => new QuarterParser(today),
+            PrevTimespanParser.Pattern => new PrevTimespanParser(today),
+            _ => new UnknownPatternParser()
+        };
+
+        return strategy.Parse(seq);
+    }
 
     public static DateTime? ParseDate(string input)
     {
