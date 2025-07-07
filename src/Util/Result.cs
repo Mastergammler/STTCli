@@ -125,6 +125,7 @@ public static class ResultExtensions
         };
     }
 
+    //TODO: i would want a collection of things
     public static Result<TComb> Combine<T1, T2, TComb>(this Result<T1> r1,
                                                        Result<T2> r2,
                                                        Func<T1, T2, TComb> combinator)
@@ -151,6 +152,10 @@ public static class ResultExtensions
         return new Failure<TComb>(errorMsg);
     }
 
+    public static Result<T> Ensure<T>(this Result<T> result, Func<T, bool> condition, string error)
+    {
+        return Ensure(result, condition, e => error.With(e));
+    }
     public static Result<T> Ensure<T>(this Result<T> result, Func<T, bool> condition, Func<T, string> error)
     {
         return result switch
@@ -159,6 +164,19 @@ public static class ResultExtensions
             _ => result
         };
     }
+
+    public static Result<T> EnsureIf<T>(this Result<T> result,
+                                        Func<T, bool> preCondition,
+                                        Func<T, bool> condition,
+                                        string error)
+    {
+        return result switch
+        {
+            Success<T> s when preCondition(s.value) => Ensure(result, condition, error),
+            _ => result
+        };
+    }
+
 
     public static Result<T> MapOrDefault<T>(this Result<T?> result, T defaultValue) where T : struct
     {

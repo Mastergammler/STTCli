@@ -19,6 +19,7 @@ public class ReplCommands(ICommandFactory factory, Repl repl) : SubCommand
         _commands["stop"] = factory.Create<StopTrackingCmd>();
         _commands["tracking"] = factory.Create<TrackingInfoCmd>();
         _commands["time"] = factory.Create<TimeOverviewCmd>();
+        _commands["fill"] = factory.Create<TimeFillCmd>();
 
         _commands["exit"] = factory.Create<QuitCmd>();
     }

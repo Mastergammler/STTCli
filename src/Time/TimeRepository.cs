@@ -2,15 +2,19 @@ using Microsoft.EntityFrameworkCore;
 
 public class TimeRepository(SttContext db)
 {
-    public TimeEntry CreateTimeEntry(ListItem item)
+    //FIXME: there could still be a running entry for a different item,
+    // but you could create a new item, that would then run at the same time
+    public TimeEntry CreateTimeEntry(ListItem item, DateTime? start = null, DateTime? end = null)
     {
         var activeEntryForItem = db.ActiveEntries.SingleOrDefault(e => e.Item == item);
         if (activeEntryForItem is null)
         {
             activeEntryForItem = new TimeEntry
             {
-                Start = DateTime.UtcNow,
-                Item = item
+                Start = start ?? DateTime.UtcNow,
+                Item = item,
+                // end may be null
+                End = end
             };
             db.Add(activeEntryForItem);
         }
@@ -27,7 +31,18 @@ public class TimeRepository(SttContext db)
     {
         return db.TimeEntries.Include(e => e.Item)
                              .Where(e => e.Start >= startTime && e.Start <= endTime)
+                             .OrderBy(e => e.Start)
                              .ToArray();
+    }
+
+    public (TimeEntry? pre, TimeEntry? suc) FindNeighbourEntries(DateTime time)
+    {
+        var sameDayEntries = db.TimeEntries.Where(e => e.End >= time.Date && e.Start < time.Date.Midnight());
+
+        var closestBefore = sameDayEntries.Where(d => d.End < time).OrderByDescending(d => d.End).FirstOrDefault();
+        var closestAfter = sameDayEntries.Where(d => d.Start > time).OrderBy(d => d.Start).FirstOrDefault();
+
+        return (closestBefore, closestAfter);
     }
 
     public void Commit() => db.SaveChanges();

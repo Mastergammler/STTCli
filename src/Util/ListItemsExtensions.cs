@@ -12,7 +12,7 @@ public static class ListItemExtensions
     {
         if (span.Hours > 0)
         {
-            string hours = (span.Hours).ToString().PadLeft(2, ' ');
+            string hours = ((int)span.TotalHours).ToString().PadLeft(2, ' ');
             return $"{hours}:{span.Minutes:D2} h";
         }
         else
