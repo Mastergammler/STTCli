@@ -1,3 +1,4 @@
+public enum FillType { NONE, START, END, MIDDLE }
 public class TimeService(TimeRepository repo, SttContext db)
 {
     //TODO: message that others have been stopped
@@ -25,5 +26,60 @@ public class TimeService(TimeRepository repo, SttContext db)
         repo.Commit();
 
         return entries;
+    }
+
+    //FIXME: there is no check for overriding an existing time entry
+    // -> Because the neighbour detection doesn't know about it
+    public Result<TimeEntry> FillItem(ListItem item, DateTime itemTime, FillType fill = FillType.NONE)
+    {
+        var refDate = itemTime.Date;
+        var neigh = repo.FindNeighbourEntries(itemTime);
+
+        DateTime startTime;
+        DateTime endTime;
+
+        //TODO: refactor validation handling
+        var neighResult = Source.Of(neigh)
+                                .Ensure(n => n.pre != null || n.suc != null, "Cannot fill an empty day!")
+                                .EnsureIf(n => n.pre != null, n => n.pre.End != null, "Predecessor must be finished!");
+
+        if (neighResult is Failure<(TimeEntry?, TimeEntry?)> f) return new Failure<TimeEntry>(f.Error);
+
+        if (neigh.pre is null && neigh.suc != null)
+        {
+            if (fill == FillType.END || fill == FillType.MIDDLE)
+                return Result.Fail<TimeEntry>($"Fill type {fill} is invalid when successor is null!");
+
+            fill = FillType.START;
+        }
+        else if (neigh.pre != null && neigh.suc is null)
+        {
+            if (fill == FillType.START || fill == FillType.MIDDLE)
+                return Result.Fail<TimeEntry>($"Fill type {fill} is invalid when predecessor is null!");
+            fill = FillType.END;
+        }
+
+        switch (fill)
+        {
+            case FillType.NONE:
+            case FillType.END:
+                startTime = neigh.pre.End.Value;
+                endTime = itemTime;
+                break;
+            case FillType.START:
+                startTime = itemTime;
+                endTime = neigh.suc.Start;
+                break;
+            case FillType.MIDDLE:
+                startTime = neigh.pre.End.Value;
+                endTime = neigh.suc.Start;
+                break;
+            default: throw new NotImplementedException($"Handling for value {fill} not implemented!");
+        }
+
+        var newEntity = repo.CreateTimeEntry(item, startTime, endTime);
+        repo.Commit();
+
+        return Source.Of(newEntity);
     }
 }

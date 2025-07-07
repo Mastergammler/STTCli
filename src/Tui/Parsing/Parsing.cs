@@ -16,11 +16,12 @@ public static class Parsing
         return new Failure<int>(INVALID_NUM_ERR.With(numStr));
     }
 
-    public static Result<int> ParseInt(this string numStr, Func<int, bool> validator)
+    public static Result<int> ParseInt(this string numStr, Func<int, bool> validator, string? msg = null)
     {
         if (int.TryParse(numStr, out int num))
         {
-            return validator(num) ? new Success<int>(num) : new Failure<int>(NUM_VALIDATION_ERR.With(num));
+            return validator(num) ? new Success<int>(num)
+                                  : new Failure<int>(msg?.With(num) ?? NUM_VALIDATION_ERR.With(num));
         }
         return new Failure<int>(INVALID_NUM_ERR.With(numStr));
     }

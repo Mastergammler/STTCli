@@ -24,9 +24,10 @@ public class DeleteItemCmd(SttContext db) : ICommand
             // -> And then we would have something for each CRUD thingy?
             switch (type)
             {
-                case "items": db.Remove(db.Items.FirstOrDefault(i => i.Id == id)); break;
-                case "tags": db.Remove(db.Tags.FirstOrDefault(i => i.ID == id)); break;
+                case "item": db.Remove(db.Items.FirstOrDefault(i => i.Id == id)); break;
+                case "tag": db.Remove(db.Tags.FirstOrDefault(i => i.ID == id)); break;
                 case "filter": db.Remove(db.Filters.FirstOrDefault(i => i.Id == id)); break;
+                case "entry": db.Remove(db.TimeEntries.FirstOrDefault(i => i.Id == id)); break;
                 default: Print($"Unknown list type '{type}'"); break;
             }
 

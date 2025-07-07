@@ -24,6 +24,13 @@ public static class Extensions
 
     public static string With(this string str, params object[] args) => string.Format(str, args);
 
+    public static bool Single(this bool[] values)
+    {
+        int acc = 0;
+        for (int i = 0; i < values.Length; i++) if (values[i]) acc++;
+
+        return acc <= 1;
+    }
 
     public static Result<IEnumerable<T>> FindArg<T>(this Memory<T> input, Func<T, bool> predicate)
     {

@@ -14,6 +14,9 @@ public static class Symbols
     public const string SILENT_ARG = "-silent";
     public const string NO_ARG = "-n";
     public const string YES_ARG = "-y";
+    public const string START_ARG = "-s";
+    public const string END_ARG = "-e";
+    public const string SURROUND_ARG = "-sur";
 
     // Messages
     public const string NO_ITEMS_MSG = "No items found for search: '{0}'";
@@ -23,6 +26,9 @@ public static class Symbols
     public const string REQ_POS_NUM_ERR = "Number must be positive, but was '{0}'";
     public const string NUM_VALIDATION_ERR = "Number '{0}' didn't pass the required validation";
     public const string NUM_TOO_SMALL_ERR = "Number must be bigger than '{0}'";
+    public const string NUM_INVALID_HOUR = "'{0}' is not a valid hour value";
+    public const string NUM_INVALID_MIN = "'{0}' is not a valid minute value";
+    public const string NUM_INVALID_SEC = "'{0}' is not a valid second value";
     public const string MULTI_ARG_ERR = "Argument '{0}' was specified multiple times. (Not supported)";
     public const string TT_ONLY_FOR_TASKS_ERR = "Time tracking is only allowed for Tasks! (Level was {0})";
 
