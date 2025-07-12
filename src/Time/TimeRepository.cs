@@ -27,12 +27,19 @@ public class TimeRepository(SttContext db)
                                                                      .ToArray();
 
     //TODO: TT - handle entries over night
-    public IEnumerable<TimeEntry> FindItemsWithin(DateTime startTime, DateTime endTime)
+    public IEnumerable<TimeEntry> FindItemsWithin(DateTime startTime, DateTime endTime, FilterOptions filter)
     {
-        return db.TimeEntries.Include(e => e.Item)
-                             .Where(e => e.Start >= startTime && e.Start <= endTime)
-                             .OrderBy(e => e.Start)
-                             .ToArray();
+        var query = db.TimeEntries.Include(e => e.Item)
+                                  .Where(e => e.Start >= startTime && e.Start <= endTime);
+
+        if (filter.Tags.Any())
+        {
+            query = filter.Tags.Select(ts => query.Where(q => (q.Item.Tags & ts.Tags) == ts.Included))
+                               .Aggregate((a, b) => a.Concat(b));
+        }
+
+        return query.OrderBy(e => e.Start)
+                    .ToArray();
     }
 
     public (TimeEntry? pre, TimeEntry? suc) FindNeighbourEntries(DateTime time)

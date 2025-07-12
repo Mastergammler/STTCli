@@ -1,6 +1,6 @@
 using static Repl;
 
-public class TimeOverviewCmd(TimeRepository repo) : ICommand
+public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
 {
     public void Execute(Memory<string> args)
     {
@@ -9,20 +9,21 @@ public class TimeOverviewCmd(TimeRepository repo) : ICommand
         string timespanExpr = args.Span[0];
 
         var timespan = Parsing.ParseTimespan(timespanExpr);
+        var filterOpts = Parsing.ParseOptions(tags.All(), args);
         //TODO: UI -> date format
         timespan.Execute(t =>
         {
             TimeSpan ts = t.end - t.start;
             if (ts.Days > 1)
             {
-                var entries = repo.FindItemsWithin(t.start, t.end);
+                var entries = repo.FindItemsWithin(t.start, t.end, filterOpts);
                 Print($"< {t.start.ToShortDateString()} - {t.end.ToShortDateString()} >");
                 PrintAccumulated(entries);
             }
             else if (ts.Days == 1)
             {
                 Print($"< {t.start.ToShortDateString()} >");
-                PrintForPeriod(t.start, t.end);
+                PrintForPeriod(t.start, t.end, filterOpts);
             }
             else
             {
@@ -32,9 +33,9 @@ public class TimeOverviewCmd(TimeRepository repo) : ICommand
         });
     }
 
-    private void PrintForPeriod(DateTime from, DateTime to)
+    private void PrintForPeriod(DateTime from, DateTime to, FilterOptions opts)
     {
-        var entries = repo.FindItemsWithin(from, to);
+        var entries = repo.FindItemsWithin(from, to, opts);
 
         Print("");
         foreach (var entry in entries)
