@@ -3,6 +3,7 @@ using static Symbols;
 
 public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
 {
+
     public void Execute(Memory<string> args)
     {
         //PERF: can i cache these somewhere, instead doing this for every call?
@@ -44,9 +45,10 @@ public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
         //TODO: TUI - add setting max size value as well
         table.AddColumns(("ID", true),
                          ("Name", false),
-                         ("Tags", false),
-                         ("Created", true));
-        table.AddColumn<DateTime?>("Deadline", true, d => d?.ToLocalTime().ToString(SHORT_DATE),
+                         ("Tags", false));
+
+        table.AddColumn<DateTime>("Created", true, d => d.ToString(SHORT_DATE));
+        table.AddColumn<DateTime?>("Deadline", true, DEADLINE_FORMAT,
                                    new ColumnStyle<DateTime?>()
                                    {
                                        //Overdue

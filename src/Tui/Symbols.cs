@@ -36,11 +36,33 @@ public static class Symbols
     public const string KEYWORD_THIS = "this";
 
     public const string DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-    public const string SHORT_DATE = "dd MMM HH:mm";
+    public const string SHORT_DATE = "dd MMM";
+    public const string SHORT_DATE_TIME = "dd MMM HH:mm";
     public const string TIME_PORTION_ONLY = "HH:mm";
 
     // UNICODE
     public const string UNI_BULLET = "\u2022";
+    public const string UNI_ARRHEAD_R = "\u27A4";
     //TODO: adjust indent dynamically
     public const string UL = $"\n    {UNI_BULLET} ";
+
+
+    // Converters
+    public static readonly Func<DateTime?, bool, string?> DEADLINE_FORMATTER = (d, noTime) =>
+    {
+        string? formatted = null;
+        if (d is not null)
+        {
+            var dateStr = d.Value.ToLocalTime().ToString(noTime ? SHORT_DATE : SHORT_DATE_TIME);
+            var timeTillCompletion = d.Value - DateTime.UtcNow;
+            var days = (int)timeTillCompletion.TotalDays;
+
+            if (days < 0) formatted = dateStr;
+            else formatted = $"{days}d {UNI_ARRHEAD_R} {dateStr}";
+        }
+
+        return formatted;
+    };
+    public static readonly Func<DateTime?, string?> DEADLINE_FORMAT_NOTIME = d => DEADLINE_FORMATTER(d, true);
+    public static readonly Func<DateTime?, string?> DEADLINE_FORMAT = d => DEADLINE_FORMATTER(d, false);
 }

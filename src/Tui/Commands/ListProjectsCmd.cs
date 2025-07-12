@@ -55,8 +55,9 @@ public class ListProjectsCmd(SttContext db, SttCache cache) : ICommand
         AsciiTable table = new();
 
         //TODO: better way of unifying table definition
-        table.AddColumns(("Name", false), ("Tags", false), ("Created", true));
-        table.AddColumn<DateTime?>("Deadline", true, d => d?.ToLocalTime().ToString(SHORT_DATE),
+        table.AddColumns(("Name", false), ("Tags", false));
+        table.AddColumn<DateTime>("Created", true, d => d.ToString(SHORT_DATE));
+        table.AddColumn<DateTime?>("Deadline", true, DEADLINE_FORMAT_NOTIME,
                                    new ColumnStyle<DateTime?>()
                                    {
                                        //Overdue
