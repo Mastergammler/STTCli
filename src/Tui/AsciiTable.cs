@@ -1,8 +1,9 @@
 using System.Text;
 
+using static Symbols;
+
 public class AsciiTable
 {
-    public const string NO_DATA = "-";
 
     private int _curColumIndex = 0;
     private IDictionary<int, TableColumn> _columns = new Dictionary<int, TableColumn>();

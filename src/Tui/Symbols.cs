@@ -2,6 +2,8 @@ public static class Symbols
 {
     public static readonly string NL = Environment.NewLine;
 
+    public const string NO_DATA = "-";
+
     public const string S_ID = "$";
     public const string S_NAME = ">>";
     public const string S_TAG = "#";
@@ -43,6 +45,12 @@ public static class Symbols
     // UNICODE
     public const string UNI_BULLET = "\u2022";
     public const string UNI_ARRHEAD_R = "\u27A4";
+
+    public const string UNI_TRI_L = "\u25E3";
+    public const string UNI_TRI_R = "\u25E2";
+    public const string UNI_DIAMOND = "\u2B25";
+    public const string UNI_DASH = "\u2014";
+
     //TODO: adjust indent dynamically
     public const string UL = $"\n    {UNI_BULLET} ";
 
