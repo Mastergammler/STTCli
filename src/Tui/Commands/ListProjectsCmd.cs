@@ -2,7 +2,7 @@
 using static Repl;
 using static Symbols;
 
-public class ListProjectsCmd(SttContext db, SttCache cache) : ICommand
+public class ListProjectsCmd(SttContext db, SttCache cache, TimeRepository times) : ICommand
 {
     public void Execute(Memory<string> args)
     {
@@ -50,13 +50,15 @@ public class ListProjectsCmd(SttContext db, SttCache cache) : ICommand
                                      Percentage = Math.Round((float)g.Count(i => i.Finished != null) / g.Count() * 100, 2)
                                  })
                                  .ToDictionary(i => i.ProjectId);
+        var projectTimes = times.AccumulationsFor(projectIds);
 
         // ------------ PRINTING ---------------------
         AsciiTable table = new();
 
         //TODO: better way of unifying table definition
         table.AddColumns(("Name", false), ("Tags", false));
-        table.AddColumn<DateTime>("Created", true, d => d.ToString(SHORT_DATE));
+        table.AddColumn<TimeSpan>("Time", true, t => t.TotalSeconds > 0 ? t.Format() : NO_DATA);
+        table.AddColumn<(int, int, double)>("Tasks", true, t => $"{t.Item3}% {UNI_DASH} {t.Item1} / {t.Item2}");
         table.AddColumn<DateTime?>("Deadline", true, DEADLINE_FORMAT_NOTIME,
                                    new ColumnStyle<DateTime?>()
                                    {
@@ -90,16 +92,15 @@ public class ListProjectsCmd(SttContext db, SttCache cache) : ICommand
                                         IsRowStyle = true,
                                         Priority = 10
                                     });
-        table.AddColumn<(int, int, double)>("Tasks", false, t => $"{t.Item1} / {t.Item2} ({t.Item3}%)");
 
         table.AddData(projects.Select(i => new object[]
         {
             i.Name.Truncate(36,true),
             DisplayTags(tags, i.Tags).Truncate(24,true),
-            i.Created.ToLocalTime().ToString(SHORT_DATE),
+            projectTimes.GetValueOrDefault(i.Id),
+            taskCounts.ContainsKey(i.Id) ? (taskCounts[i.Id].Finished,taskCounts[i.Id].Count,taskCounts[i.Id].Percentage) : (0,0,0),
             i.Deadline,
             i.Finished,
-            taskCounts.ContainsKey(i.Id) ? (taskCounts[i.Id].Finished,taskCounts[i.Id].Count,taskCounts[i.Id].Percentage) : (0,0,0),
         //TODO: sort by done items / percentage properly
         }).OrderByDescending(o => o[5]));
         table.Print(DEFAULT_INDENT);

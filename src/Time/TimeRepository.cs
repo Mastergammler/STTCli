@@ -42,6 +42,25 @@ public class TimeRepository(SttContext db)
                     .ToArray();
     }
 
+    public IEnumerable<TimeEntry> FindEntriesByParent(long parentItemId) => db.TimeEntries.Include(e => e.Item)
+                                                                                          .Where(e => e.Item.ParentId == parentItemId)
+                                                                                          .ToArray();
+
+    //NOTE: because of microsofts akward interface design we can't return a IDictionary, becaues then the 
+    // GetValueOrDefault method is not available ...
+    public Dictionary<long, TimeSpan> AccumulationsFor(HashSet<long> parentIds)
+    {
+        return db.TimeEntries.Where(e => e.Item.ParentId != null && parentIds.Contains(e.Item.ParentId.Value))
+                             .GroupBy(e => e.Item.ParentId.Value)
+                             .ToArray()
+                             .Select(g => new
+                             {
+                                 ProjectId = g.Key,
+                                 ProjectTime = g.Aggregate(TimeSpan.Zero, (acc, e) => acc + e.Duration),
+                             })
+                             .ToDictionary(e => e.ProjectId, e => e.ProjectTime);
+    }
+
     public (TimeEntry? pre, TimeEntry? suc) FindNeighbourEntries(DateTime time)
     {
         var sameDayEntries = db.TimeEntries.Where(e => e.End >= time.Date && e.Start < time.Date.Midnight());
