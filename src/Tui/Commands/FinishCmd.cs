@@ -21,7 +21,7 @@ public class FinishCmd(ItemService service) : ICommand
                              .OneOrDefault(p => Source.Of(p[OVR_DATE.Length..])
                                                       .MapNotNull(Parsing.ParseDate, e => INVALID_DATE_ERR.With(e))
                                                       .Map(d => new DateExprOpt(d, true)),
-                                           new DateExprOpt(DateTime.UtcNow, false));
+                                           new DateExprOpt(Time.Now(), false));
 
         service.FindItems(new(searchParam, allowBulk, true))
                .Combine(dateResult, (i, d) => new FinishItemOpt(i, d))

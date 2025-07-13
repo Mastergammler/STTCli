@@ -52,7 +52,7 @@ public class TimeFillCmd(ItemService items, TimeService time) : ICommand
             var splitIdx = timeExpr.Length == 4 ? 2 : 1;
             var hourStr = timeExpr[..splitIdx];
             var minStr = timeExpr[splitIdx..];
-            var today = DateTime.UtcNow;
+            var today = Time.Today();
 
             var minResult = minStr.ParseInt(i => i >= 0 && i < 60, NUM_INVALID_MIN);
             return hourStr.ParseInt(i => i >= 0 && i < 24, NUM_INVALID_HOUR)
