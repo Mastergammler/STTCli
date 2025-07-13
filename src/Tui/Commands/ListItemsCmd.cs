@@ -40,6 +40,7 @@ public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
             query = queries.Aggregate((a, b) => a.Concat(b));
         }
 
+        var now = Time.Now();
         AsciiTable table = new();
 
         //TODO: TUI - add setting max size value as well
@@ -47,12 +48,12 @@ public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
                          ("Name", false),
                          ("Tags", false));
 
-        table.AddColumn<DateTime>("Created", true, d => d.ToString(SHORT_DATE));
+        table.AddColumn<DateTime>("Created", true, d => d.NamedDate());
         table.AddColumn<DateTime?>("Deadline", true, DEADLINE_FORMAT,
                                    new ColumnStyle<DateTime?>()
                                    {
                                        //Overdue
-                                       StyleCondition = d => d <= DateTime.UtcNow,
+                                       StyleCondition = d => d <= now,
                                        BackgroundColorId = 52,
                                        IsRowStyle = true,
                                        Priority = 9
@@ -60,7 +61,7 @@ public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
                                    new ColumnStyle<DateTime?>()
                                    {
                                        // Within 7 days
-                                       StyleCondition = d => d <= DateTime.UtcNow.AddDays(7),
+                                       StyleCondition = d => d <= now.AddDays(7),
                                        BackgroundColorId = 58,
                                        IsRowStyle = true,
                                        Priority = 8
@@ -68,12 +69,12 @@ public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
                                    new ColumnStyle<DateTime?>()
                                    {
                                        // Within 30 days
-                                       StyleCondition = d => d <= DateTime.UtcNow.AddDays(30),
+                                       StyleCondition = d => d <= now.AddDays(30),
                                        TextColorId = 178,
                                        IsRowStyle = true,
                                        Priority = 7
                                    });
-        table.AddColumn<DateTime?>("Finished", true, d => d?.ToLocalTime().ToString(SHORT_DATE),
+        table.AddColumn<DateTime?>("Finished", true, d => d?.NamedDate(),
                                     new ColumnStyle<DateTime?>()
                                     {
                                         StyleCondition = d => d is not null,
@@ -91,7 +92,7 @@ public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
             i.Name.Truncate(36,true),
             DisplayTags(tags, i.Tags).Truncate(24,true),
             //TODO: TUI - handle time conversion better
-            i.Created.ToLocalTime().ToString(SHORT_DATE),
+            i.Created.NamedDate(),
             i.Deadline,
             i.Finished
         }));

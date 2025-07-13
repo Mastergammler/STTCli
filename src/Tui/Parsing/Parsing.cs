@@ -4,7 +4,7 @@ public record TimePeriod(DateTime start, DateTime end);
 
 public static class Parsing
 {
-    public static readonly DateTime TIME_TEMPLATE = new DateTime(1, 1, 1, 23, 0, 0);
+    public static readonly DateTime TIME_TEMPLATE_LOCAL = new DateTime(1, 1, 1, 23, 0, 0);
 
     public static Result<int> PositiveResult(this string numStr)
     {
@@ -39,7 +39,7 @@ public static class Parsing
     {
         //TODO: Time - is this the best way to handle date usage?
         // -> Also possible error for UTC edge case? (I guess not that relevant)
-        var today = dateToday?.Date ?? DateTime.UtcNow.Date;
+        var today = dateToday?.Date ?? Time.Today();
 
         var seq = new SequenceBuilder(timespanExpr);
         ITimespanParsingStrategy strategy = seq.Pattern switch
@@ -62,22 +62,23 @@ public static class Parsing
     public static DateTime? ParseDate(string input)
     {
         DateTime? dateLocalTime = null;
+        DateTime today = Time.Today();
         var inputInvariant = input.ToLower();
 
         if (DateTime.TryParse(input, out DateTime result)) dateLocalTime = result;
         else if (inputInvariant.Equals("eod") ||
                  inputInvariant.Equals("today") ||
-                 inputInvariant.Equals("t")) dateLocalTime = DateTime.Today.AddTime(TIME_TEMPLATE);
+                 inputInvariant.Equals("t")) dateLocalTime = today.AddTime(TIME_TEMPLATE_LOCAL);
         else if (inputInvariant.Equals("eow"))
         {
-            DayOfWeek dow = DateTime.Today.DayOfWeek;
+            DayOfWeek dow = today.DayOfWeek;
             // if today is sunday, it's end of next week
             var offset = 7 - (int)dow;
-            dateLocalTime = DateTime.Today.AddDays(offset).AddTime(TIME_TEMPLATE);
+            dateLocalTime = today.AddDays(offset).AddTime(TIME_TEMPLATE_LOCAL);
         }
         else if (inputInvariant.Equals("eom"))
         {
-            dateLocalTime = DateTime.Today.AddMonths(1).AddDays(-DateTime.Today.Day).AddTime(TIME_TEMPLATE);
+            dateLocalTime = today.AddMonths(1).AddDays(-today.Day).AddTime(TIME_TEMPLATE_LOCAL);
         }
         //NOTE: these might intefere with eow, eod, eoy etc!!!!
         else if (inputInvariant.EndsWith("d") ||
@@ -89,7 +90,7 @@ public static class Parsing
             if (int.TryParse(numberPortion, out int number))
             {
                 if (isWeek) number = number * 7;
-                dateLocalTime = DateTime.Today.AddDays(number).AddTime(TIME_TEMPLATE);
+                dateLocalTime = today.AddDays(number).AddTime(TIME_TEMPLATE_LOCAL);
             }
             //TODO: error handling?
         }
@@ -104,7 +105,7 @@ public static class Parsing
             //TODO: this can still crash, if it's a invalid month value, i should maybe validate this
             if (int.TryParse(dayStr, out int day) && int.TryParse(monthStr, out int month))
             {
-                dateLocalTime = (new DateTime(DateTime.Today.Year, month, day)).AddTime(TIME_TEMPLATE);
+                dateLocalTime = (new DateTime(today.Year, month, day)).AddTime(TIME_TEMPLATE_LOCAL);
             }
             //TODO: error handling etc?
         }

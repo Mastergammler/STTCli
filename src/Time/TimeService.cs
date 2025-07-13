@@ -4,7 +4,7 @@ public class TimeService(TimeRepository repo, SttContext db)
     //TODO: message that others have been stopped
     public void StartTracking(ListItem item)
     {
-        var endTime = DateTime.UtcNow;
+        var endTime = Time.Now();
         //TODO: UGLY
         foreach (var entry in db.ActiveEntries.Where(e => e.Item != item))
         {
@@ -18,7 +18,7 @@ public class TimeService(TimeRepository repo, SttContext db)
     public IEnumerable<TimeEntry> StopTracking()
     {
         var entries = db.ActiveEntries.ToArray();
-        var endTime = DateTime.UtcNow;
+        var endTime = Time.Now();
         foreach (var entry in entries)
         {
             entry.End = endTime;

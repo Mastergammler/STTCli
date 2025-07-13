@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
 public class TimeEntry
 {
     public long Id { set; get; }
@@ -8,13 +6,16 @@ public class TimeEntry
 
     public long ItemId { set; get; }
     public ListItem Item { set; get; }
+}
 
-    [NotMapped]
-    public TimeSpan Duration => (End ?? DateTime.UtcNow) - Start;
-
-    public override string ToString()
+public static class EntryExtensions
+{
+    public static TimeSpan Duration(this TimeEntry entry) => (entry.End ?? Time.Now()) - entry.Start;
+    public static string LocalFormat(this TimeEntry entry)
     {
-        var timespan = (End ?? DateTime.UtcNow) - Start;
-        return $"{Start.ToLocalTime().ToString(Symbols.TIME_PORTION_ONLY)}  {Item.Name} ({timespan.Format().Trim()})";
+        return $"{entry.Start.Time()}  {entry.Item.Name} ({entry.Duration().Hours().Trim()})";
     }
+
+    public static TimeSpan Total(this IEnumerable<TimeEntry> grouping)
+        => grouping.Aggregate(TimeSpan.Zero, (acc, e) => acc + e.Duration());
 }

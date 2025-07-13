@@ -11,7 +11,7 @@ public class TimeRepository(SttContext db)
         {
             activeEntryForItem = new TimeEntry
             {
-                Start = start ?? DateTime.UtcNow,
+                Start = start ?? Time.Now(),
                 Item = item,
                 // end may be null
                 End = end
@@ -56,7 +56,7 @@ public class TimeRepository(SttContext db)
                              .Select(g => new
                              {
                                  ProjectId = g.Key,
-                                 ProjectTime = g.Aggregate(TimeSpan.Zero, (acc, e) => acc + e.Duration),
+                                 ProjectTime = g.Total()
                              })
                              .ToDictionary(e => e.ProjectId, e => e.ProjectTime);
     }

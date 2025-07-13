@@ -36,24 +36,24 @@ public class ShowProjectItemsCmd(ProjectRepository projects, TagRepository tags,
             var project = entities.Single();
             var tasks = projects.FindTasks(project);
             var entries = times.FindEntriesByParent(project.Id);
-            var totalTime = entries.Aggregate(TimeSpan.Zero, (acc, e) => acc + e.Duration);
+            var totalTime = entries.Total();
             var grouped = entries.GroupBy(e => e.Item.Name)
-                                 .Select(g => (g.Key, g.Aggregate(TimeSpan.Zero, (acc, e) => acc + e.Duration)))
+                                 .Select(g => (g.Key, g.Total()))
                                  .ToDictionary(e => e.Key, e => e.Item2);
 
             var finishedTasks = tasks.Where(t => t.IsFinished).Count();
             double percentage = Math.Round((float)finishedTasks / tasks.Count() * 100, 2);
 
             Print("");
-            Print($"{UNI_DIAMOND}  {project.Name}  {UNI_DIAMOND}  {finishedTasks}/{tasks.Count()} ({percentage}%) - {totalTime.Format()}");
+            Print($"{UNI_DIAMOND}  {project.Name}  {UNI_DIAMOND}  {finishedTasks}/{tasks.Count()} ({percentage}%) - {totalTime.Hours()}");
 
             //TODO: refactor, not pretty, duplicate from list items cmd
             AsciiTable table = new();
 
             table.AddColumns(("Name", false),
                              ("Tags", false));
-            table.AddColumn<TimeSpan>("Time", true, t => t.Format());
-            table.AddColumn<DateTime?>("Finished", true, d => d?.ToLocalTime().ToString(SHORT_DATE),
+            table.AddColumn<TimeSpan>("Time", true, t => t.Hours());
+            table.AddColumn<DateTime?>("Finished", true, d => d?.NamedDate(),
                                         new ColumnStyle<DateTime?>()
                                         {
                                             StyleCondition = d => d is not null,

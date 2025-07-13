@@ -54,16 +54,17 @@ public class ListProjectsCmd(SttContext db, SttCache cache, TimeRepository times
 
         // ------------ PRINTING ---------------------
         AsciiTable table = new();
+        var now = Time.Now();
 
         //TODO: better way of unifying table definition
         table.AddColumns(("Name", false), ("Tags", false));
-        table.AddColumn<TimeSpan>("Time", true, t => t.TotalSeconds > 0 ? t.Format() : NO_DATA);
+        table.AddColumn<TimeSpan>("Time", true, t => t.TotalSeconds > 0 ? t.Hours() : NO_DATA);
         table.AddColumn<(int, int, double)>("Tasks", true, t => $"{t.Item3}% {UNI_DASH} {t.Item1} / {t.Item2}");
         table.AddColumn<DateTime?>("Deadline", true, DEADLINE_FORMAT_NOTIME,
                                    new ColumnStyle<DateTime?>()
                                    {
                                        //Overdue
-                                       StyleCondition = d => d <= DateTime.UtcNow,
+                                       StyleCondition = d => d <= now,
                                        BackgroundColorId = 52,
                                        IsRowStyle = true,
                                        Priority = 9
@@ -71,7 +72,7 @@ public class ListProjectsCmd(SttContext db, SttCache cache, TimeRepository times
                                    new ColumnStyle<DateTime?>()
                                    {
                                        // Within 7 days
-                                       StyleCondition = d => d <= DateTime.UtcNow.AddDays(7),
+                                       StyleCondition = d => d <= now.AddDays(7),
                                        BackgroundColorId = 58,
                                        IsRowStyle = true,
                                        Priority = 8
@@ -79,12 +80,12 @@ public class ListProjectsCmd(SttContext db, SttCache cache, TimeRepository times
                                    new ColumnStyle<DateTime?>()
                                    {
                                        // Within 30 days
-                                       StyleCondition = d => d <= DateTime.UtcNow.AddDays(30),
+                                       StyleCondition = d => d <= now.AddDays(30),
                                        TextColorId = 178,
                                        IsRowStyle = true,
                                        Priority = 7
                                    });
-        table.AddColumn<DateTime?>("Finished", true, d => d?.ToLocalTime().ToString(SHORT_DATE),
+        table.AddColumn<DateTime?>("Finished", true, d => d?.NamedDate(),
                                     new ColumnStyle<DateTime?>()
                                     {
                                         StyleCondition = d => d is not null,

@@ -3,6 +3,15 @@ using System.Globalization;
 
 public static class Time
 {
+    public static DateTime Now() => DateTime.UtcNow;
+    public static DateTime Today() => DateTime.UtcNow.Date;
+
+    public static string TillNow(this DateTime time)
+    {
+        var span = Now() - time;
+        return span.Hours();
+    }
+
     public static Func<DateTime, TimePeriod> SingleDay = d => new(d, d.Midnight());
 
     /// <summary>
