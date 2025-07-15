@@ -63,7 +63,8 @@ public class TimeRepository(SttContext db)
 
     public (TimeEntry? pre, TimeEntry? suc) FindNeighbourEntries(DateTime time)
     {
-        var sameDayEntries = db.TimeEntries.Where(e => e.End >= time.Date && e.Start < time.Date.Midnight());
+        var sameDayEntries = db.TimeEntries.Where(e => (e.End >= time.Date || e.Start >= time.Date)
+                                                    && e.Start < time.Date.Midnight());
 
         var closestBefore = sameDayEntries.Where(d => d.End < time).OrderByDescending(d => d.End).FirstOrDefault();
         var closestAfter = sameDayEntries.Where(d => d.Start > time).OrderBy(d => d.Start).FirstOrDefault();

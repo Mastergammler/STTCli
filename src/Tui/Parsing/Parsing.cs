@@ -1,5 +1,4 @@
 using static Symbols;
-
 public record TimePeriod(DateTime start, DateTime end);
 
 public static class Parsing

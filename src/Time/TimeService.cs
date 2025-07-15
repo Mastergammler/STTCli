@@ -48,14 +48,14 @@ public class TimeService(TimeRepository repo, SttContext db)
         if (neigh.pre is null && neigh.suc != null)
         {
             if (fill == FillType.END || fill == FillType.MIDDLE)
-                return Result.Fail<TimeEntry>($"Fill type {fill} is invalid when successor is null!");
+                return Result.Fail<TimeEntry>($"Fill type {fill} is invalid when predecessor is null!");
 
             fill = FillType.START;
         }
         else if (neigh.pre != null && neigh.suc is null)
         {
             if (fill == FillType.START || fill == FillType.MIDDLE)
-                return Result.Fail<TimeEntry>($"Fill type {fill} is invalid when predecessor is null!");
+                return Result.Fail<TimeEntry>($"Fill type {fill} is invalid when successor is null!");
             fill = FillType.END;
         }
 

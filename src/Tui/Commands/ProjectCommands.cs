@@ -5,6 +5,7 @@ public class ProjectCommands(ICommandFactory factory, UiContext ctx, Repl repl) 
     protected override void InitCommands()
     {
         _commands["info"] = factory.Create<ShowProjectItemsCmd>();
+        _commands["ls"] = factory.Create<ShowProjectItemsCmd>();
         _commands["start"] = factory.Create<StartTrackingCmd>();
         _commands["finish"] = factory.Create<FinishCmd>();
         _commands["deadline"] = factory.Create<DeadlineCmd>();
