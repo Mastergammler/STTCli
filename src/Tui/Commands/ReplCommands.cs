@@ -5,6 +5,7 @@ public class ReplCommands(ICommandFactory factory, Repl repl) : SubCommand
         _commands["stats"] = factory.Create<DbStatsCmd>();
         _commands["show"] = factory.Create<ShowListCmd>();
         _commands["list"] = factory.Create<ListCmd>();
+        _commands["ls"] = factory.Create<ListCmd>();
 
         _commands["new"] = factory.Create<CreateCmd>();
         _commands["edit"] = factory.Create<EditCmd>();

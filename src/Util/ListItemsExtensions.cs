@@ -2,10 +2,12 @@ using static Symbols;
 
 public static class ListItemExtensions
 {
-    public static string Names(this IEnumerable<ListItem> items)
+    public static string Ul(this IEnumerable<string> items)
     {
-        return $"{UL}{string.Join(UL, items.Select(i => i.Name))}";
+        return $"{UL}{string.Join(UL, items)}";
     }
+
+    public static string Names(this IEnumerable<ListItem> items) => Ul(items.Select(i => i.Name));
 
     public static string Info(this IEnumerable<TimeEntry> entries)
     {
@@ -16,4 +18,5 @@ public static class ListItemExtensions
     {
         return $"{string.Join(", ", items.Select(i => i.Id))}";
     }
+
 }
