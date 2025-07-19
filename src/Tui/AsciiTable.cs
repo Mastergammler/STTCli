@@ -170,6 +170,7 @@ public class AsciiTable
     ///     38 - set foreground
     ///     48 - set background
     ///     5 - use 256 colors
+    ///     https://www.hackitu.de/termcolor256/
     /// </summary>
     private string CreateAnsiStyling(byte? textColorId, byte? bgColorId)
     {

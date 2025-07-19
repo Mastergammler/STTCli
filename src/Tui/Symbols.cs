@@ -8,8 +8,10 @@ public static class Symbols
     public const string S_NAME = ">>";
     public const string S_TAG = "#";
     public const string S_REM_TAG = "-#";
+    public const string S_TOP = "<";
 
     //  Arguments
+    public const string ALL_ARG = "-a";
     public const string BULK_ARG = "-b";
     public const string FINISHED_ARG = "-f";
     public const string OVERRIDE_ARG = "-force";
@@ -48,6 +50,8 @@ public static class Symbols
 
     //TODO: adjust indent dynamically
     public const string UL = $"\n    {UNI_BULLET} ";
+
+    public static Func<string, bool> IsTag = s => s.StartsWith(S_TAG) || s.StartsWith(S_REM_TAG);
 
     // Converters
     public static readonly Func<DateTime?, bool, string?> DEADLINE_FORMATTER = (d, noTime) =>
