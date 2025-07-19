@@ -1,44 +1,12 @@
 using static Repl;
 using static Symbols;
 
-public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
+public class ListItemsCmd(ItemRepository items, TagRepository tags, int level) : ICommand
 {
-
     public void Execute(Memory<string> args)
     {
-        //PERF: can i cache these somewhere, instead doing this for every call?
-        // Or does EF already handle caching for those quite well?
-        var tags = db.Tags.ToArray();
-        IQueryable<ListItem> query = db.Items.Where(i => i.Level == level)
-                                             .OrderByDescending(i => i.Finished)
-                                             .ThenByDescending(i => i.Deadline != null)
-                                             .ThenBy(i => i.Deadline);
-
-        if (args.Span.Contains("-f"))
-        {
-            query = query.Where(i => i.Finished != null);
-        }
-        else if (!args.Span.Contains("-a"))
-        {
-            query = query.Where(i => i.Finished == null);
-        }
-
-        var filter = Parsing.ParseOptions(tags, args);
-
-        List<IQueryable<ListItem>> queries = [];
-
-        foreach (TagSet ts in filter.Tags)
-        {
-            var subQuery = query.Where(i => (i.Tags & ts.Tags) == ts.Included);
-            queries.Add(subQuery);
-        }
-
-        if (queries.Any())
-        {
-            //PERF: not sure if this is a performant query
-            // but i guess its fine, because it's mostly only 1-3 items or something
-            query = queries.Aggregate((a, b) => a.Concat(b));
-        }
+        var filter = Parsing.ParseFiltering(tags.All(), args);
+        var query = items.FilterBy(filter);
 
         var now = Time.Now();
         AsciiTable table = new();
@@ -90,14 +58,12 @@ public class ListItemsCmd(SttContext db, SttCache cache, int level) : ICommand
             i.Id,//.ToString().Truncate(4,true),
             //TODO: TUI - make it configurable & depending on max size
             i.Name.Truncate(36,true),
-            DisplayTags(tags, i.Tags).Truncate(24,true),
+            DisplayTags(tags.All(), i.Tags).Truncate(24,true),
             //TODO: TUI - handle time conversion better
             i.Created.NamedDate(),
             i.Deadline,
             i.Finished
         }));
         table.Print(DEFAULT_INDENT);
-
-        cache.RecentItems = table;
     }
 }

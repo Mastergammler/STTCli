@@ -49,8 +49,8 @@ public class CommandFactory : ICommandFactory
             Type t when t == typeof(QuitCmd) => new QuitCmd(_repl, _timeService, _timeRepository),
 
             Type t when t == typeof(ListCmd) => new ListCmd(this),
-            Type t when t == typeof(ListItemsCmd) => new ListItemsCmd(_db, _cache, 0),
-            Type t when t == typeof(ListProjectsCmd) => new ListProjectsCmd(_db, _cache, _timeRepository),
+            Type t when t == typeof(ListItemsCmd) => new ListItemsCmd(_items, _tags, 0),
+            Type t when t == typeof(ListProjectsCmd) => new ListProjectsCmd(_items, _tags, _timeRepository),
             Type t when t == typeof(ListRecentCmd) => new ListRecentCmd(_cache),
             Type t when t == typeof(ListFiltersCmd) => new ListFiltersCmd(_db),
             Type t when t == typeof(ListTagsCmd) => new ListTagsCmd(_db),

@@ -9,7 +9,7 @@ public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
         string timespanExpr = args.Span[0];
 
         var timespan = Parsing.ParseTimespan(timespanExpr);
-        var filterOpts = Parsing.ParseOptions(tags.All(), args);
+        var filterOpts = Parsing.ParseFiltering(tags.All(), args);
 
         timespan.Execute(t =>
         {

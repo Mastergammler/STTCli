@@ -148,10 +148,7 @@ public static class Parsing
         return parts.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
     }
 
-    //TODO: refactor to some more generalized parser strategies
-    private static Func<string, bool> IsTag = s => s.StartsWith("#") || s.StartsWith("~#");
-
-    public static FilterOptions ParseOptions(Tag[] tags, Memory<string> args)
+    public static FilterOptions ParseFiltering(Tag[] tags, Memory<string> args)
     {
         var opt = new FilterOptions();
         var dict = tags.ToDictionary(t => t.Name);
@@ -161,6 +158,18 @@ public static class Parsing
             {
                 var tagSet = ParseTags(arg, dict);
                 opt.Tags.Add(tagSet);
+            }
+            else if (arg.Equals(FINISHED_ARG))
+            {
+                opt.FinishedOnly = true;
+            }
+            else if (arg.Equals(ALL_ARG))
+            {
+                opt.IncludeAll = true;
+            }
+            else if (arg.StartsWith(S_TOP))
+            {
+                Parsing.PositiveResult(arg[1..]).Execute(i => opt.Limit = i);
             }
 
             // TODO: handle other cases
@@ -213,6 +222,12 @@ public static class Parsing
 public class FilterOptions
 {
     public List<TagSet> Tags { get; } = [];
+    public bool FinishedOnly { get; set; } = false;
+    public bool IncludeAll { get; set; } = false;
+    public int Level { get; set; } = 0;
+
+    public int Limit { get; set; } = 0;
+    public bool TopList => Limit > 0;
 }
 
 public class TagSet
