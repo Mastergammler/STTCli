@@ -1,6 +1,7 @@
 
 using static Repl;
 
+//TODO: #5 - refactor
 public class ShowListCmd(SttContext db, ICommandFactory factory) : ICommand
 {
     public void Execute(Memory<string> args)
