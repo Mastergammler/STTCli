@@ -31,7 +31,7 @@ public class ListProjectsCmd(ItemRepository items, TagRepository tags, TimeRepos
                                    {
                                        //Overdue
                                        StyleCondition = d => d <= now,
-                                       BackgroundColorId = 52,
+                                       BackgroundColor = Ansi256Color.DARK_RED,
                                        IsRowStyle = true,
                                        Priority = 9
                                    },
@@ -39,7 +39,7 @@ public class ListProjectsCmd(ItemRepository items, TagRepository tags, TimeRepos
                                     {
                                         //Within the week
                                         StyleCondition = d => d <= now.AddDays(7),
-                                        BackgroundColorId = 130,
+                                        BackgroundColor = Ansi256Color.ORANGE,
                                         IsRowStyle = true,
                                         Priority = 8
                                     },
@@ -47,7 +47,7 @@ public class ListProjectsCmd(ItemRepository items, TagRepository tags, TimeRepos
                                    {
                                        // Within the month
                                        StyleCondition = d => d <= now.AddDays(30),
-                                       BackgroundColorId = 58,
+                                       BackgroundColor = Ansi256Color.DARK_YELLOW,
                                        IsRowStyle = true,
                                        Priority = 7
                                    },
@@ -55,7 +55,7 @@ public class ListProjectsCmd(ItemRepository items, TagRepository tags, TimeRepos
                                    {
                                        // Within the quarter (roughly)
                                        StyleCondition = d => d <= now.AddDays(90),
-                                       TextColorId = 178,
+                                       TextColor = Ansi256Color.YELLOW,
                                        IsRowStyle = true,
                                        Priority = 6
                                    });
@@ -63,7 +63,7 @@ public class ListProjectsCmd(ItemRepository items, TagRepository tags, TimeRepos
                                     new ColumnStyle<DateTime?>()
                                     {
                                         StyleCondition = d => d is not null,
-                                        BackgroundColorId = 22,
+                                        BackgroundColor = Ansi256Color.DARK_GREEN,
                                         IsRowStyle = true,
                                         Priority = 10
                                     });

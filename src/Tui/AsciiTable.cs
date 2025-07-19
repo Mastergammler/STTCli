@@ -144,14 +144,14 @@ public class AsciiTable
                     // if override is desired, the priority should be used!
                     else if (rowStyle.Priority >= style.Priority) style = rowStyle;
                 }
-                if (style is not null) output.Append(CreateAnsiStyling(style.TextColorId, style.BackgroundColorId));
+                if (style is not null) output.Append(AnsiStyling.Create(style.TextColor, style.BackgroundColor));
 
                 output.Append(padding);
                 output.Append(FormatColumnData(row.ColumnData[i], _columns[i]));
                 output.Append(padding);
 
                 // reset colors
-                output.Append(ResetAnsyStyling());
+                output.Append(AnsiStyling.Reset());
             }
 
             output.Append(separator);
@@ -164,25 +164,6 @@ public class AsciiTable
         _filterValue = null;
         _filterColumnIdx = 0;
     }
-
-    /// <summary>
-    ///     \u001b[ ANSI start escap sequence
-    ///     38 - set foreground
-    ///     48 - set background
-    ///     5 - use 256 colors
-    ///     https://www.hackitu.de/termcolor256/
-    /// </summary>
-    private string CreateAnsiStyling(byte? textColorId, byte? bgColorId)
-    {
-        string textStyling = textColorId != null ? $"38;5;{textColorId}" : string.Empty;
-        string bgStyling = bgColorId != null ? $"48;5;{bgColorId}" : string.Empty;
-
-        if (bgStyling.Length > 0 && textStyling.Length > 0) textStyling += ";";
-
-        return $"\u001b[{textStyling}{bgStyling}m";
-    }
-
-    private string ResetAnsyStyling() => "\u001b[0m";
 
     private string FormatColumnData(object data, TableColumn columnInfo)
     {
@@ -254,8 +235,8 @@ public abstract class ColumnStyle
 
     // should this style be applied to the whole row instead of the jsut the 
     public bool IsRowStyle { get; set; }
-    public byte? TextColorId { get; set; }
-    public byte? BackgroundColorId { get; set; }
+    public Ansi256Color? TextColor { get; set; }
+    public Ansi256Color? BackgroundColor { get; set; }
 }
 
 public class ColumnStyle<T> : ColumnStyle

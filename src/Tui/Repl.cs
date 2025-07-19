@@ -68,10 +68,11 @@ public class Repl
         return string.Join(" ", tagNames);
     }
 
-    public static void Print(string text)
+    public static void Print(string text, bool resetColor = false)
     {
         string placeholder = " ";
-        Console.WriteLine($"{placeholder.PadLeft(INPUT_CHARS.Length, ' ')}{text}");
+        string ansiStyle = resetColor ? AnsiStyling.Reset() : string.Empty;
+        Console.WriteLine($"{ansiStyle}{placeholder.PadLeft(INPUT_CHARS.Length, ' ')}{text}");
     }
 
     public static bool ValidateSingleMatch<T>(string searchStr, IEnumerable<T> items, Func<T, string> nameSelector)
