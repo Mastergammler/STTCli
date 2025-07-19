@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 
+public record EntryMetadata(string TaskName, string? ProjectName);
+public record EntryData(EntryMetadata Meta, TimeEntry Entry);
+
 public class TimeRepository(SttContext db)
 {
     //FIXME: there could still be a running entry for a different item,
@@ -27,7 +30,7 @@ public class TimeRepository(SttContext db)
                                                                      .ToArray();
 
     //TODO: TT - handle entries over night
-    public IEnumerable<TimeEntry> FindItemsWithin(DateTime startTime, DateTime endTime, FilterOptions filter)
+    public IEnumerable<EntryData> FindItemsWithin(DateTime startTime, DateTime endTime, FilterOptions filter)
     {
         var query = db.TimeEntries.Include(e => e.Item)
                                   .Where(e => e.Start >= startTime && e.Start <= endTime);
@@ -39,6 +42,7 @@ public class TimeRepository(SttContext db)
         }
 
         return query.OrderBy(e => e.Start)
+                    .Select(e => new EntryData(new EntryMetadata(e.Item.Name, e.Item.Parent.Name), e))
                     .ToArray();
     }
 

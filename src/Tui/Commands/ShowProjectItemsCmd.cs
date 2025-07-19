@@ -57,7 +57,7 @@ public class ShowProjectItemsCmd(ProjectRepository projects, TagRepository tags,
                                         new ColumnStyle<DateTime?>()
                                         {
                                             StyleCondition = d => d is not null,
-                                            BackgroundColorId = 22,
+                                            BackgroundColor = Ansi256Color.DARK_GREEN,
                                             IsRowStyle = true,
                                             Priority = 10
                                         });

@@ -22,7 +22,7 @@ public class ListItemsCmd(ItemRepository items, TagRepository tags, int level) :
                                    {
                                        //Overdue
                                        StyleCondition = d => d <= now,
-                                       BackgroundColorId = 52,
+                                       BackgroundColor = Ansi256Color.DARK_RED,
                                        IsRowStyle = true,
                                        Priority = 9
                                    },
@@ -30,7 +30,7 @@ public class ListItemsCmd(ItemRepository items, TagRepository tags, int level) :
                                    {
                                        // Within 7 days
                                        StyleCondition = d => d <= now.AddDays(7),
-                                       BackgroundColorId = 58,
+                                       BackgroundColor = Ansi256Color.DARK_YELLOW,
                                        IsRowStyle = true,
                                        Priority = 8
                                    },
@@ -38,7 +38,7 @@ public class ListItemsCmd(ItemRepository items, TagRepository tags, int level) :
                                    {
                                        // Within 30 days
                                        StyleCondition = d => d <= now.AddDays(30),
-                                       TextColorId = 178,
+                                       TextColor = Ansi256Color.YELLOW,
                                        IsRowStyle = true,
                                        Priority = 7
                                    });
@@ -46,7 +46,7 @@ public class ListItemsCmd(ItemRepository items, TagRepository tags, int level) :
                                     new ColumnStyle<DateTime?>()
                                     {
                                         StyleCondition = d => d is not null,
-                                        BackgroundColorId = 22,
+                                        BackgroundColor = Ansi256Color.DARK_GREEN,
                                         IsRowStyle = true,
                                         Priority = 10
                                     });
