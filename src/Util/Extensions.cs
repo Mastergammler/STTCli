@@ -36,4 +36,9 @@ public static class Extensions
     {
         return new Success<IEnumerable<T>>(input.Where(predicate));
     }
+
+    public static void AddAll<T>(this ICollection<T> coll, IEnumerable<T> newItems)
+    {
+        foreach (var item in newItems) coll.Add(item);
+    }
 }
