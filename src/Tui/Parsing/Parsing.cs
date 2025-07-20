@@ -181,6 +181,7 @@ public static class Parsing
     private static TagSet ParseTags(string tagString, IDictionary<string, Tag> tags)
     {
         TagSet ts = new();
+        ts.Name = tagString;
 
         string[] ands = tagString.Split('&');
 
@@ -232,6 +233,7 @@ public class FilterOptions
 
 public class TagSet
 {
+    public string Name { set; get; }
     public long Included { set; get; } = 0;
     public long Excluded { set; get; } = 0;
     public long Tags => Included | Excluded;

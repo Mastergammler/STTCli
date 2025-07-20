@@ -1,12 +1,15 @@
 using static Repl;
+using static Symbols;
 
 public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
 {
     public void Execute(Memory<string> args)
     {
-        if (args.ShowHelp("Usage: <timespan expression>")) return;
+        if (args.ShowHelp($"Usage: <timespan expression> [{GROUP_ARG}] [{SHORT_ARG}] [<filterExpr>]")) return;
 
         string timespanExpr = args.Span[0];
+        bool groupItems = args.Span.Contains(GROUP_ARG);
+        bool shortGroups = args.Span.Contains(SHORT_ARG);
 
         var timespan = Parsing.ParseTimespan(timespanExpr)
                               .Ensure(t => (t.end - t.start).Days >= 1, t => $"Invalid timespan: < {t.start.ShortDate()} - {t.end.ShortDate()} >");
@@ -14,55 +17,73 @@ public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
 
         timespan.Execute(t =>
         {
-            TimeSpan ts = t.end - t.start;
-            var entries = repo.FindItemsWithin(t.start, t.end, filterOpts);
-
-            if (ts.Days == 1)
+            if (groupItems)
             {
-                Print($"< {t.start.ShortDate()} >");
-                Print("");
-                foreach (var e in entries) Print(e.Entry.LocalFormat());
-
-                Print("");
-                Print("--- ACCUMULATED ---");
+                PrintGrouping(t, filterOpts, shortGroups);
             }
             else
             {
-                Print($"< {t.start.ShortDate()} - {t.end.ShortDate()} >");
+                PrintAccumulation(t, filterOpts);
             }
-
-            PrintAccumulated(entries);
         });
     }
 
-    private static Func<IEnumerable<EntryData>, IEnumerable<(string, TimeSpan)>> TaskGroup = list =>
-        list.GroupBy(e => e.Meta.TaskName)
-            .Select(g => (g.Key, g.Select(e => e.Entry).Total()));
+    private void PrintAccumulation(TimePeriod t, FilterOptions filterOpts)
+    {
+        TimeSpan ts = t.end - t.start;
+        //TODO: this doesn't take the parent project tag into account, should it?
+        var entries = repo.FindItemsWithin(t.start, t.end, filterOpts);
+
+        if (ts.Days == 1)
+        {
+            Print($"< {t.start.ShortDate()} >");
+            Print("");
+            foreach (var e in entries) Print(e.Entry.LocalFormat());
+
+            Print("");
+            Print("--- ACCUMULATED ---");
+        }
+        else
+        {
+            Print($"< {t.start.ShortDate()} - {t.end.ShortDate()} >");
+        }
+
+        PrintAccumulated(entries);
+    }
+
+    private void PrintGrouping(TimePeriod t, FilterOptions filterOpts, bool shortDisplay)
+    {
+        // we don't want to filter the items here, 
+        // we just want to group them based on the tags!
+        var entries = repo.FindItemsWithin(t.start, t.end, new());
+        Print($"< {t.start.ShortDate()} - {t.end.ShortDate()} >");
+
+        List<TimeGroup> groups = [];
+        HashSet<EntryData> usedEntries = [];
+
+        //TODO: REFACTOR, not pretty ...
+        foreach (TagSet ts in filterOpts.Tags)
+        {
+            var tagEntries = entries.Where(e => ts.Matches((e.Entry.Item.Tags | (e.Meta.ProjectTags ?? 0))));
+            usedEntries.AddAll(tagEntries);
+            groups.Add(new(ts.Name, tagEntries.Select(e => e.Entry).Total(), Grouping.ByTask(tagEntries)));
+        }
+
+        // order for all the categories we want, but #rest should be the last
+        var restGroup = entries.Except(usedEntries);
+        groups = groups.OrderByDescending(g => g.Time).ToList();
+        groups.Add(new("rest", restGroup.Select(e => e.Entry).Total(), Enumerable.Empty<TimeGroup>()));
+
+        Grouping.PrintGroups(groups, shortDisplay ? 0 : 1);
+    }
 
     private void PrintAccumulated(IEnumerable<EntryData> entries)
     {
-        Print("");
-
         var total = entries.Select(e => e.Entry).Total();
-        var projects = entries.Where(e => e.Meta.ProjectName is not null)
-                             .GroupBy(e => e.Meta.ProjectName)
-                             .Select(g => (g.Key, g.Select(e => e.Entry).Total(), TaskGroup(g)));
-        var tasks = TaskGroup(entries.Where(e => e.Meta.ProjectName is null))
-            .Select(p => (p.Item1, p.Item2, Enumerable.Empty<(string, TimeSpan)>()));
+        var projects = Grouping.ByProject(entries);
+        var tasks = Grouping.ByTask(entries.Where(e => e.Meta.ProjectName is null));
 
-        var ansiStyle = AnsiStyling.Text(Ansi256Color.GRAY);
-
-        foreach (var group in projects.Concat(tasks).OrderByDescending(g => g.Item2))
-        {
-            Print($"{group.Item2.Hours()}  {group.Item1}", true);
-            foreach (var sub in group.Item3)
-            {
-                //Print($"       {ansiStyle}{sub.Item1} ({sub.Item2.Hours().Trim()})", true);
-                Print($"    {ansiStyle}{sub.Item2.Hours()}  {sub.Item1}", true);
-            }
-        }
-
-        Print("", true);
+        Grouping.PrintGroups(projects.Concat(tasks).OrderByDescending(g => g.Time), 1);
         Print($"--- Total {total.Hours()} ---");
     }
 }

@@ -16,6 +16,8 @@ public static class Symbols
     public const string FINISHED_ARG = "-f";
     public const string OVERRIDE_ARG = "-force";
     public const string SILENT_ARG = "-silent";
+    public const string GROUP_ARG = "-group";
+    public const string SHORT_ARG = "-short";
     public const string NO_ARG = "-n";
     public const string YES_ARG = "-y";
     public const string START_ARG = "-s";

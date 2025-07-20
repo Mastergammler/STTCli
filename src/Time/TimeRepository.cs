@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-public record EntryMetadata(string TaskName, string? ProjectName);
+public record EntryMetadata(string TaskName, string? ProjectName, long? ProjectTags);
 public record EntryData(EntryMetadata Meta, TimeEntry Entry);
 
 public class TimeRepository(SttContext db)
@@ -42,7 +42,9 @@ public class TimeRepository(SttContext db)
         }
 
         return query.OrderBy(e => e.Start)
-                    .Select(e => new EntryData(new EntryMetadata(e.Item.Name, e.Item.Parent.Name), e))
+                    .Select(e => new EntryData(new EntryMetadata(e.Item.Name,
+                                                                 e.Item.Parent.Name,
+                                                                 e.Item.Parent.Tags), e))
                     .ToArray();
     }
 
