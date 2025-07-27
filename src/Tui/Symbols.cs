@@ -7,7 +7,7 @@ public static class Symbols
     public const string S_ID = "$";
     public const string S_NAME = ">>";
     public const string S_TAG = "#";
-    public const string S_REM_TAG = "-#";
+    public const string S_REM_TAG = "~#";
     public const string S_TOP = "<";
 
     //  Arguments

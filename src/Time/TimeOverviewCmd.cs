@@ -61,10 +61,10 @@ public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
         List<TimeGroup> groups = [];
         HashSet<EntryData> usedEntries = [];
 
-        //TODO: REFACTOR, not pretty ...
+        //TODO: REF - ugly
         foreach (TagSet ts in filterOpts.Tags)
         {
-            var tagEntries = entries.Where(e => ts.Matches((e.Entry.Item.Tags | (e.Meta.ProjectTags ?? 0))));
+            var tagEntries = entries.Where(e => Grouping.ByExpression(ts, e));
             usedEntries.AddAll(tagEntries);
             groups.Add(new(ts.Name, tagEntries.Select(e => e.Entry).Total(), Grouping.ByTask(tagEntries)));
         }
