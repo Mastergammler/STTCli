@@ -38,4 +38,14 @@ public static class Grouping
 
         Print("", true);
     }
+
+    //TODO: Strategy Pattern?
+    public static Func<TagSet, EntryData, bool> ByExpression = (ts, e) =>
+    {
+        long projectItemTags = e.Entry.Item.Tags | (e.Meta.ProjectTags ?? 0);
+
+        if (ts.ExUnionExpr) return ts.ExclusionaryUnion(projectItemTags);
+        else if (ts.AndExpr) return ts.AndMatch(projectItemTags);
+        else return ts.OrMatch(projectItemTags);
+    };
 }

@@ -151,12 +151,12 @@ public static class Parsing
     public static FilterOptions ParseFiltering(Tag[] tags, Memory<string> args)
     {
         var opt = new FilterOptions();
-        var dict = tags.ToDictionary(t => t.Name);
+        var tagsByName = tags.ToDictionary(t => t.Name);
         foreach (string arg in args.Span)
         {
             if (IsTag(arg))
             {
-                var tagSet = ParseTags(arg, dict);
+                var tagSet = ParseTags(arg, tagsByName);
                 opt.Tags.Add(tagSet);
             }
             else if (arg.Equals(FINISHED_ARG))
@@ -178,14 +178,23 @@ public static class Parsing
         return opt;
     }
 
-    private static TagSet ParseTags(string tagString, IDictionary<string, Tag> tags)
+    public static TagSet ParseTags(string tagExpression, IDictionary<string, Tag> tags)
     {
         TagSet ts = new();
-        ts.Name = tagString;
+        ts.Name = tagExpression;
+        ts.OrExpr = tagExpression.Contains("|");
+        ts.AndExpr = tagExpression.Contains("&");
 
-        string[] ands = tagString.Split('&');
+        // when none is given, means a single tag, so we hanlde it like a AND expression
+        if (ts.AndExpr == false && ts.OrExpr == false) ts.AndExpr = true;
 
-        foreach (string op in ands)
+        // NOTE: Limitation: currently we do not handle every single expression case
+        // if & and | expressions are mixed, we use the ExlusionaryUnion approach 
+        // to determine the tags, but this means, we're ignoring here what was 
+        // an OR-input and what was a AND-input
+        string[] tagExprs = tagExpression.Split(['&', '|']);
+
+        foreach (string op in tagExprs)
         {
             string tagName = op;
             bool isComplement = false;
@@ -211,6 +220,7 @@ public static class Parsing
                 }
             }
 
+
             //NOTE: for the purpose of parsing we just ignore invalid values
             // - else we create a crash for every invalid user input?
             // -> Or would this be the correct handling? Because i would want to know that something is wrong?
@@ -234,6 +244,10 @@ public class FilterOptions
 public class TagSet
 {
     public string Name { set; get; }
+    public bool AndExpr { set; get; }
+    public bool OrExpr { set; get; }
+    public bool ExUnionExpr => AndExpr && OrExpr;
+
     public long Included { set; get; } = 0;
     public long Excluded { set; get; } = 0;
     public long Tags => Included | Excluded;
