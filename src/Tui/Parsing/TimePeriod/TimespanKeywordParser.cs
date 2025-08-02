@@ -1,6 +1,4 @@
-using System.Globalization;
-
-public class TimespanKeywordParser(DateTime today) : ITimespanParsingStrategy
+public class TimespanKeywordParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
     public const long Pattern = 0b10;
 

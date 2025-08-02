@@ -18,7 +18,7 @@ public enum Ansi256Color
     GRAY = 245,
 }
 
-public class AnsiStyling
+public static class AnsiStyling
 {
     public static string ANSI_START = "\u001b[";
     public static string ANSI_END = "m";
@@ -46,4 +46,14 @@ public class AnsiStyling
 
 
     public static string Reset() => ANSI_RESET;
+
+    public static string WithBg(this string text, Ansi256Color color)
+    {
+        return $"{Bg(color)} {text} {Reset()}";
+    }
+
+    public static string WithColor(this string text, Ansi256Color color)
+    {
+        return $"{Text(color)}{text}{Reset()}";
+    }
 }

@@ -19,7 +19,7 @@ public class FinishCmd(ItemService service) : ICommand
         var dateResult = args.FindArg(s => s.StartsWith(OVR_DATE))
                              .Ensure(c => c.Count() < 2, c => MULTI_ARG_ERR.With(DATE_EXPR_ARG))
                              .OneOrDefault(p => Source.Of(p[OVR_DATE.Length..])
-                                                      .MapNotNull(Parsing.ParseDate, e => INVALID_DATE_ERR.With(e))
+                                                      .MapNotNull(Parsing.ParseDateOld, e => INVALID_DATE_ERR.With(e))
                                                       .Map(d => new DateExprOpt(d, true)),
                                            new DateExprOpt(Time.Now(), false));
 

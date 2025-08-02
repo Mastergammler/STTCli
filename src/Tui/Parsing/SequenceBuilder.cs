@@ -7,6 +7,26 @@ public enum CharType
     SYMBOL = 0b11
 }
 
+/// <summary>
+///  NOTE: this doesn't work for compiling the pattern because of the limitations of c# pattern matichng
+///  Patterns need to run against compile-time constants, and there is no way for the compiler to know
+///  (or to tell the compiler) that these values basically are / neither can you pre-compile them in a way.
+/// </summary>
+public static class PatternUtil
+{
+    public static long Create(params CharType[] types)
+    {
+        long pattern = 0L;
+
+        foreach (CharType type in types)
+        {
+            pattern = (pattern << 2) | (long)type;
+        }
+
+        return pattern;
+    }
+}
+
 public record CharSequence(CharType Type, int StartIndex, int initialCount = 1)
 {
     public int CharCount { set; get; } = initialCount;
@@ -16,7 +36,6 @@ public record CharSequence(CharType Type, int StartIndex, int initialCount = 1)
     public string Str { set; get; } = string.Empty;
 };
 
-//TODO: should probably do the processing of the expression itself?
 public class SequenceBuilder
 {
     private IList<CharSequence> _sequences = new List<CharSequence>(5);

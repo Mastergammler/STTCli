@@ -1,4 +1,4 @@
-public class PrevTimespanParser(DateTime today) : ITimespanParsingStrategy
+public class PrevTimespanParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
     public const long Pattern = 0b101101;
 

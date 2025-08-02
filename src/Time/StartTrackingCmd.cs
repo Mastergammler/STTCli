@@ -25,6 +25,6 @@ public class StartTrackingCmd(ItemService items, TimeService service) : ICommand
     private void AddTimeEntries(ListItem item)
     {
         service.StartTracking(item);
-        Print($"Started time tracking for item {item.Name}");
+        Print($"Started time tracking for item {item.Name.WithBg(ITEM_BG)}");
     }
 }

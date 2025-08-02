@@ -1,6 +1,6 @@
 using static Symbols;
 
-public class DayspanParser(DateTime today) : ITimespanParsingStrategy
+public class DayspanParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
     public const long Pattern = 0b0110;
 
