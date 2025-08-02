@@ -11,7 +11,7 @@ public static class ListItemExtensions
 
     public static string Info(this IEnumerable<TimeEntry> entries)
     {
-        return $"{UL}{string.Join(UL, entries.Select(i => $"{i.Item.Name} >> {i.Start.TillNow()}"))}\n";
+        return $"{UL}{string.Join(UL, entries.Select(i => $"{i.Item.Name.WithBg(ITEM_BG)} >> {i.Start.TillNow()}"))}\n";
     }
 
     public static string Ids(this IEnumerable<ListItem> items)

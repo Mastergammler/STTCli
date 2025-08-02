@@ -1,6 +1,7 @@
 public static class Symbols
 {
     public static readonly string NL = Environment.NewLine;
+    public static readonly Ansi256Color ITEM_BG = Ansi256Color.DARK_GRAY;
 
     public const string NO_DATA = "-";
 
@@ -22,7 +23,7 @@ public static class Symbols
     public const string YES_ARG = "-y";
     public const string START_ARG = "-s";
     public const string END_ARG = "-e";
-    public const string SURROUND_ARG = "-sur";
+    public const string SURROUND_ARG = "-mid";
 
     // Messages
     public const string NO_ITEMS_MSG = "No items found for search: '{0}'";

@@ -15,7 +15,7 @@ public class DeadlineCmd(ItemService service) : ICommand
         string searchStr = args.Span[0];
         string dateExpr = args.Span[1];
 
-        var deadlineResult = Source.Of(dateExpr).MapNotNull(Parsing.ParseDate, e => INVALID_DATE_ERR.With(e));
+        var deadlineResult = Source.Of(dateExpr).MapNotNull(Parsing.ParseDateOld, e => INVALID_DATE_ERR.With(e));
         service.FindItems(new(searchStr, allowBulk))
                .Combine(deadlineResult, (i, d) => new SetDeadlineOpt(i, d, forceOverride))
                .Execute(SetDeadline);

@@ -1,4 +1,4 @@
-public class QuarterParser(DateTime today) : ITimespanParsingStrategy
+public class QuarterParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
     public const long PatternShort = 0b1001;
     public const long PatternLong = 0b01111001;

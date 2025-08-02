@@ -14,14 +14,14 @@ public class TimeFillCmd(ItemService items, TimeService time) : ICommand
         string timeExpr = args.Span[0];
 
         items.FindItems(new(searchWord)).Single()
-             .Combine(ParseTime(timeExpr), (i, d) => (i, d))
+             .Combine(Parsing.ParseDate(timeExpr), (i, d) => (i, d))
              .Combine(DetermineFillType(args), (tup, type) => new FillOptions(tup.i, tup.d, type))
              .Execute(opt =>
              {
                  time.FillItem(opt.item, opt.time, opt.type)
                      .Execute(e =>
                      {
-                         Print($"Created entry {e.Start} - {e.End} for item: {e.Item.Name}");
+                         Print($"Created entry {e.Start} - {e.End} for item: {e.Item.Name.WithBg(ITEM_BG)}");
                      });
              });
     }
@@ -35,33 +35,12 @@ public class TimeFillCmd(ItemService items, TimeService time) : ICommand
         bool[] values = [isStartTime, isEndTime, isInBetween];
 
         return Source.Of(values)
-              .Ensure(v => v.Single(), $"{START_ARG},{END_ARG} and {SURROUND_ARG} are mutually exclusive!")
-              //TODO: bit ugly that i throw away this value now again and also don't switch on it
+              .Ensure(v => v.SingleTruth(), $"{START_ARG},{END_ARG} and {SURROUND_ARG} are mutually exclusive!")
               .Map(v =>
                       isStartTime ? FillType.START :
                       isEndTime ? FillType.END :
                       isInBetween ? FillType.MIDDLE :
-                      FillType.NONE
+                      FillType.DEFAULT
               );
-    }
-
-    private Result<DateTime> ParseTime(string timeExpr)
-    {
-        if (timeExpr.Length == 3 || timeExpr.Length == 4)
-        {
-            var splitIdx = timeExpr.Length == 4 ? 2 : 1;
-            var hourStr = timeExpr[..splitIdx];
-            var minStr = timeExpr[splitIdx..];
-            var today = Time.Today();
-
-            var minResult = minStr.ParseInt(i => i >= 0 && i < 60, NUM_INVALID_MIN);
-            return hourStr.ParseInt(i => i >= 0 && i < 24, NUM_INVALID_HOUR)
-                          .Combine(minResult, (h, m) => new DateTime(today.Year, today.Month, today.Day, h, m, 0, DateTimeKind.Local))
-                          .Map(d => d.ToUniversalTime());
-        }
-        else
-        {
-            return Result.Fail<DateTime>($"Time expression of length {timeExpr.Length} not supported.");
-        }
     }
 }

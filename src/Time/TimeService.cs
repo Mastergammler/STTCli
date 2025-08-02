@@ -1,4 +1,4 @@
-public enum FillType { NONE, START, END, MIDDLE }
+public enum FillType { DEFAULT = 0, START = 1, END = 2, MIDDLE = 3 }
 public class TimeService(TimeRepository repo, SttContext db)
 {
     //TODO: message that others have been stopped
@@ -30,7 +30,7 @@ public class TimeService(TimeRepository repo, SttContext db)
 
     //FIXME: there is no check for overriding an existing time entry
     // -> Because the neighbour detection doesn't know about it
-    public Result<TimeEntry> FillItem(ListItem item, DateTime itemTime, FillType fill = FillType.NONE)
+    public Result<TimeEntry> FillItem(ListItem item, DateTime itemTime, FillType fill = FillType.DEFAULT)
     {
         var refDate = itemTime.Date;
         var neigh = repo.FindNeighbourEntries(itemTime);
@@ -61,7 +61,7 @@ public class TimeService(TimeRepository repo, SttContext db)
 
         switch (fill)
         {
-            case FillType.NONE:
+            case FillType.DEFAULT:
             case FillType.END:
                 startTime = neigh.pre.End.Value;
                 endTime = itemTime;

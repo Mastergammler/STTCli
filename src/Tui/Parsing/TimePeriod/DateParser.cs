@@ -1,6 +1,8 @@
-public class IsoDateParser(DateTime today) : ITimespanParsingStrategy
+using static CharType;
+
+public class IsoDateParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
-    public const long Pattern = 0b0111011101;
+    public const long Pattern = (int)NUMBER << 8 | (int)SYMBOL << 6 | (int)NUMBER << 4 | (int)SYMBOL << 2 | (int)NUMBER;
 
     public Result<TimePeriod> Parse(SequenceBuilder sequence)
     {
@@ -23,9 +25,9 @@ public class IsoDateParser(DateTime today) : ITimespanParsingStrategy
     }
 }
 
-public class YearDateParser(DateTime today) : ITimespanParsingStrategy
+public class YearDateParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
-    public const long Pattern = 0b011101;
+    public const long Pattern = (int)NUMBER << 4 | (int)SYMBOL << 2 | (int)NUMBER;
 
     public Result<TimePeriod> Parse(SequenceBuilder seq)
     {
@@ -38,9 +40,9 @@ public class YearDateParser(DateTime today) : ITimespanParsingStrategy
     }
 }
 
-public class SingleNumberParser(DateTime today) : ITimespanParsingStrategy
+public class SingleNumberParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
-    public const long Pattern = 0b01;
+    public const long Pattern = (long)NUMBER;
 
     public Result<TimePeriod> Parse(SequenceBuilder seq)
     {

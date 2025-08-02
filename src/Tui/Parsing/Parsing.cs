@@ -34,6 +34,16 @@ public static class Parsing
         return Result.Fail(parsed, INVALID_DATE_ERR.With(dateStr));
     }
 
+    public static Result<DateTime> DateResult(this Result<string> result)
+    {
+        return result switch
+        {
+            Success<string> s => s.value.DateResult(),
+            Failure<string> f => new Failure<DateTime>(f.Error),
+            _ => throw new NotImplementedException($"Handling not implemented for type: {result.GetType().Name}")
+        };
+    }
+
     public static Result<TimePeriod> ParseTimespan(string timespanExpr, DateTime? dateToday = null)
     {
         //TODO: Time - is this the best way to handle date usage?
@@ -41,9 +51,9 @@ public static class Parsing
         var today = dateToday?.Date ?? Time.Today();
 
         var seq = new SequenceBuilder(timespanExpr);
-        ITimespanParsingStrategy strategy = seq.Pattern switch
+        ISequenceParsingStrategy<TimePeriod> strategy = seq.Pattern switch
         {
-            ErrorResultParser.Pattern => new ErrorResultParser(),
+            ErrorResultParser<TimeSpan>.Pattern => new ErrorResultParser<TimePeriod>(),
             TimespanKeywordParser.Pattern => new TimespanKeywordParser(today),
             DayspanParser.Pattern => new DayspanParser(today),
             IsoDateParser.Pattern => new IsoDateParser(today),
@@ -52,13 +62,31 @@ public static class Parsing
             QuarterParser.PatternShort or
             QuarterParser.PatternLong => new QuarterParser(today),
             PrevTimespanParser.Pattern => new PrevTimespanParser(today),
-            _ => new UnknownPatternParser()
+            _ => new UnknownPatternParser<TimePeriod>()
         };
 
         return strategy.Parse(seq);
     }
 
-    public static DateTime? ParseDate(string input)
+    public static Result<DateTime> ParseDate(string dateExpression, DateTime? dateToday = null)
+    {
+        var today = dateToday?.Date ?? Time.Today();
+
+        var seq = new SequenceBuilder(dateExpression);
+        ISequenceParsingStrategy<DateTime> parser = seq.Pattern switch
+        {
+            ErrorResultParser<DateTime>.Pattern => new ErrorResultParser<DateTime>(),
+            TimeParser.Pattern => new TimeParser(today),
+            DatedTimeParser.Pattern => new DatedTimeParser(today),
+            _ => new UnknownPatternParser<DateTime>()
+        };
+
+        return parser.Parse(seq);
+    }
+
+
+    //TODO: REF - Use the Result and new parser strategies instead
+    public static DateTime? ParseDateOld(string input)
     {
         DateTime? dateLocalTime = null;
         DateTime today = Time.Today();
