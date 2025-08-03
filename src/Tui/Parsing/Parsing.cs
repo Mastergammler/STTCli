@@ -1,10 +1,14 @@
 using static Symbols;
-public record TimePeriod(DateTime start, DateTime end);
+public record TimePeriod(DateTime Start, DateTime End);
 
 public static class Parsing
 {
     public static readonly DateTime TIME_TEMPLATE_LOCAL = new DateTime(1, 1, 1, 23, 0, 0);
 
+    /// <summary>
+    ///  Tries to parse the number and evaluates that it is not below 0
+    ///  0 is seen as a valid result as well!
+    /// </summary
     public static Result<int> PositiveResult(this string numStr)
     {
         if (int.TryParse(numStr, out int num))
@@ -53,15 +57,19 @@ public static class Parsing
         var seq = new SequenceBuilder(timespanExpr);
         ISequenceParsingStrategy<TimePeriod> strategy = seq.Pattern switch
         {
-            ErrorResultParser<TimeSpan>.Pattern => new ErrorResultParser<TimePeriod>(),
-            TimespanKeywordParser.Pattern => new TimespanKeywordParser(today),
-            DayspanParser.Pattern => new DayspanParser(today),
-            IsoDateParser.Pattern => new IsoDateParser(today),
-            YearDateParser.Pattern => new YearDateParser(today),
-            SingleNumberParser.Pattern => new SingleNumberParser(today),
-            QuarterParser.PatternShort or
-            QuarterParser.PatternLong => new QuarterParser(today),
-            PrevTimespanParser.Pattern => new PrevTimespanParser(today),
+            (int)SequencePatterns.ERR => new ErrorResultParser<TimePeriod>(),
+            (int)SequencePatterns.L => new TimespanKeywordParser(today),
+            (int)SequencePatterns.NL => new DayspanParser(today),
+            (int)SequencePatterns.N_N_N => new IsoDateParser(today),
+            (int)SequencePatterns.N_N => new YearDateParser(today),
+            (int)SequencePatterns.N => new SingleNumberParser(today),
+            (int)SequencePatterns.LN => new QuarterParser(today),
+            (int)SequencePatterns.N_LN => new QuarterParser(today),
+            (int)SequencePatterns.L_N => new PrevTimespanParser(today),
+            (int)SequencePatterns.DL => new WeekdayParser(today),
+            (int)SequencePatterns.NDL => new WeekdayParser(today),
+            (int)SequencePatterns._DL => new WeekdayParser(today),
+            (int)SequencePatterns._NDL => new WeekdayParser(today),
             _ => new UnknownPatternParser<TimePeriod>()
         };
 
@@ -75,9 +83,41 @@ public static class Parsing
         var seq = new SequenceBuilder(dateExpression);
         ISequenceParsingStrategy<DateTime> parser = seq.Pattern switch
         {
-            ErrorResultParser<DateTime>.Pattern => new ErrorResultParser<DateTime>(),
-            TimeParser.Pattern => new TimeParser(today),
-            DatedTimeParser.Pattern => new DatedTimeParser(today),
+            (int)SequencePatterns.ERR => new ErrorResultParser<DateTime>(),
+            (int)SequencePatterns.N_N_N => new IsoDateParser(today),
+            (int)SequencePatterns.N => new SingleNumberParser(today),
+            (int)SequencePatterns._N => new TimeParser(today),
+            (int)SequencePatterns.L => new DateKeywordParser(today),
+            (int)SequencePatterns.N_N => new DatedTimeParser(today),
+            (int)SequencePatterns.DL => new WeekdayParser(today),
+            (int)SequencePatterns.NDL => new WeekdayParser(today),
+            (int)SequencePatterns._DL => new WeekdayParser(today),
+            (int)SequencePatterns._NDL => new WeekdayParser(today),
+            (int)SequencePatterns.DL_N => new WeekdayTimeDelegate(today),
+            (int)SequencePatterns.NDL_N => new WeekdayTimeDelegate(today),
+            (int)SequencePatterns._DL_N => new WeekdayTimeDelegate(today),
+            (int)SequencePatterns._NDL_N => new WeekdayTimeDelegate(today),
+            _ => new UnknownPatternParser<DateTime>()
+        };
+
+        return parser.Parse(seq);
+    }
+
+    public static Result<DateTime> ParseTime(string dateExpression, DateTime? dateToday = null)
+    {
+        var today = dateToday?.Date ?? Time.Today();
+
+        var seq = new SequenceBuilder(dateExpression);
+        ISequenceParsingStrategy<DateTime> parser = seq.Pattern switch
+        {
+            (int)SequencePatterns.ERR => new ErrorResultParser<DateTime>(),
+            (int)SequencePatterns._N => new TimeParser(today),
+            (int)SequencePatterns.N => new TimeParser(today),
+            (int)SequencePatterns.N_N => new DatedTimeParser(today),
+            (int)SequencePatterns.DL_N => new WeekdayTimeDelegate(today),
+            (int)SequencePatterns.NDL_N => new WeekdayTimeDelegate(today),
+            (int)SequencePatterns._DL_N => new WeekdayTimeDelegate(today),
+            (int)SequencePatterns._NDL_N => new WeekdayTimeDelegate(today),
             _ => new UnknownPatternParser<DateTime>()
         };
 
@@ -85,65 +125,6 @@ public static class Parsing
     }
 
 
-    //TODO: REF - Use the Result and new parser strategies instead
-    public static DateTime? ParseDateOld(string input)
-    {
-        DateTime? dateLocalTime = null;
-        DateTime today = Time.Today();
-        var inputInvariant = input.ToLower();
-
-        if (DateTime.TryParse(input, out DateTime result)) dateLocalTime = result;
-        else if (inputInvariant.Equals("eod") ||
-                 inputInvariant.Equals("today") ||
-                 inputInvariant.Equals("t")) dateLocalTime = today.AddTime(TIME_TEMPLATE_LOCAL);
-        else if (inputInvariant.Equals("eow"))
-        {
-            DayOfWeek dow = today.DayOfWeek;
-            // if today is sunday, it's end of next week
-            var offset = 7 - (int)dow;
-            dateLocalTime = today.AddDays(offset).AddTime(TIME_TEMPLATE_LOCAL);
-        }
-        else if (inputInvariant.Equals("eom"))
-        {
-            dateLocalTime = today.AddMonths(1).AddDays(-today.Day).AddTime(TIME_TEMPLATE_LOCAL);
-        }
-        //NOTE: these might intefere with eow, eod, eoy etc!!!!
-        else if (inputInvariant.EndsWith("d") ||
-                 inputInvariant.EndsWith("w"))
-        {
-            bool isWeek = inputInvariant[^1..].Equals("w");
-            var numberPortion = inputInvariant[0..^1];
-
-            if (int.TryParse(numberPortion, out int number))
-            {
-                if (isWeek) number = number * 7;
-                dateLocalTime = today.AddDays(number).AddTime(TIME_TEMPLATE_LOCAL);
-            }
-            //TODO: error handling?
-        }
-        else if (inputInvariant.Length == 4)
-        {
-            // assuming that it's all values
-            // month's starting with leading zeros
-            // using ISO formatting
-            var monthStr = inputInvariant[0..2];
-            var dayStr = inputInvariant[2..];
-
-            //TODO: this can still crash, if it's a invalid month value, i should maybe validate this
-            if (int.TryParse(dayStr, out int day) && int.TryParse(monthStr, out int month))
-            {
-                dateLocalTime = (new DateTime(today.Year, month, day)).AddTime(TIME_TEMPLATE_LOCAL);
-            }
-            //TODO: error handling etc?
-        }
-
-        return dateLocalTime?.ToUniversalTime();
-    }
-
-    public static DateTime AddTime(this DateTime dateTime, DateTime template)
-    {
-        return new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, template.Hour, template.Minute, template.Second);
-    }
 
     public static string[] ParseCmdInput(string input)
     {
@@ -247,7 +228,6 @@ public static class Parsing
                     else ts.Included |= tagValue; // add new 1s together
                 }
             }
-
 
             //NOTE: for the purpose of parsing we just ignore invalid values
             // - else we create a crash for every invalid user input?

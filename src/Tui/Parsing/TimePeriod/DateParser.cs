@@ -1,8 +1,8 @@
-using static CharType;
+using static SequencePatterns;
 
-public class IsoDateParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
+public class IsoDateParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>, ISequenceParsingStrategy<DateTime>
 {
-    public const long Pattern = (int)NUMBER << 8 | (int)SYMBOL << 6 | (int)NUMBER << 4 | (int)SYMBOL << 2 | (int)NUMBER;
+    public const int Pattern = (int)N_N_N;
 
     public Result<TimePeriod> Parse(SequenceBuilder sequence)
     {
@@ -23,11 +23,16 @@ public class IsoDateParser(DateTime today) : ISequenceParsingStrategy<TimePeriod
 
         return dateResult.Map(Time.SingleDay);
     }
+
+    Result<DateTime> ISequenceParsingStrategy<DateTime>.Parse(SequenceBuilder seq)
+    {
+        return ((ISequenceParsingStrategy<TimePeriod>)this).Parse(seq).Map(d => d.Start);
+    }
 }
 
 public class YearDateParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
-    public const long Pattern = (int)NUMBER << 4 | (int)SYMBOL << 2 | (int)NUMBER;
+    public const int Pattern = (int)N_N;
 
     public Result<TimePeriod> Parse(SequenceBuilder seq)
     {
@@ -40,9 +45,9 @@ public class YearDateParser(DateTime today) : ISequenceParsingStrategy<TimePerio
     }
 }
 
-public class SingleNumberParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
+public class SingleNumberParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>, ISequenceParsingStrategy<DateTime>
 {
-    public const long Pattern = (long)NUMBER;
+    public const int Pattern = (int)N;
 
     public Result<TimePeriod> Parse(SequenceBuilder seq)
     {
@@ -52,19 +57,25 @@ public class SingleNumberParser(DateTime today) : ISequenceParsingStrategy<TimeP
 
         Result<DateTime> dateResult = Result.Fail<DateTime>($"Date has to be either <dd> or <MM><dd> respectively. Length {length} not supported");
 
-        if (length == 4)
+        if (length == 3 || length == 4)
         {
-            string monthStr = seq.Expression[..2];
-            string dayStr = seq.Expression[2..];
-            string dateStr = $"{today.Year}-{monthStr}-{dayStr}";
+            int splitIdx = length == 4 ? 2 : 1;
+            string monthStr = seq.Expression[..splitIdx];
+            string dayStr = seq.Expression[splitIdx..];
+            string dateStr = $"{today.Year}-{monthStr.PadLeft(2, '0')}-{dayStr}";
             dateResult = dateStr.DateResult();
         }
-        else if (length == 2)
+        else if (length == 1 || length == 2)
         {
-            string dateStr = $"{today.Year}-{today.Month}-{seq.Expression}";
+            string dateStr = $"{today.Year}-{today.Month}-{seq.Expression.PadLeft(2, '0')}";
             dateResult = dateStr.DateResult();
         }
 
         return dateResult.Map(Time.SingleDay);
+    }
+
+    Result<DateTime> ISequenceParsingStrategy<DateTime>.Parse(SequenceBuilder seq)
+    {
+        return ((ISequenceParsingStrategy<TimePeriod>)this).Parse(seq).Map(d => d.Start);
     }
 }

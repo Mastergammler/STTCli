@@ -14,7 +14,7 @@ public class TimeFillCmd(ItemService items, TimeService time) : ICommand
         string timeExpr = args.Span[0];
 
         items.FindItems(new(searchWord)).Single()
-             .Combine(Parsing.ParseDate(timeExpr), (i, d) => (i, d))
+             .Combine(Parsing.ParseTime(timeExpr), (i, d) => (i, d))
              .Combine(DetermineFillType(args), (tup, type) => new FillOptions(tup.i, tup.d, type))
              .Execute(opt =>
              {

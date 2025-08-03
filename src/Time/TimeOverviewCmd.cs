@@ -12,7 +12,7 @@ public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
         bool shortGroups = args.Span.Contains(SHORT_ARG);
 
         var timespan = Parsing.ParseTimespan(timespanExpr)
-                              .Ensure(t => (t.end - t.start).Days >= 1, t => $"Invalid timespan: < {t.start.ShortDate()} - {t.end.ShortDate()} >");
+                              .Ensure(t => (t.End - t.Start).Days >= 1, t => $"Invalid timespan: < {t.Start.ShortDate()} - {t.End.ShortDate()} >");
         var filterOpts = Parsing.ParseFiltering(tags.All(), args);
 
         timespan.Execute(t =>
@@ -30,13 +30,13 @@ public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
 
     private void PrintAccumulation(TimePeriod t, FilterOptions filterOpts)
     {
-        TimeSpan ts = t.end - t.start;
+        TimeSpan ts = t.End - t.Start;
         //TODO: this doesn't take the parent project tag into account, should it?
-        var entries = repo.FindItemsWithin(t.start, t.end, filterOpts);
+        var entries = repo.FindItemsWithin(t.Start, t.End, filterOpts);
 
         if (ts.Days == 1)
         {
-            Print($"< {t.start.ShortDate()} >");
+            Print($"< {t.Start.ShortDate()} >");
             Print("");
             foreach (var e in entries) Print(e.Entry.LocalFormat());
 
@@ -45,7 +45,7 @@ public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
         }
         else
         {
-            Print($"< {t.start.ShortDate()} - {t.end.ShortDate()} >");
+            Print($"< {t.Start.ShortDate()} - {t.End.ShortDate()} >");
         }
 
         PrintAccumulated(entries);
@@ -55,8 +55,8 @@ public class TimeOverviewCmd(TimeRepository repo, TagRepository tags) : ICommand
     {
         // we don't want to filter the items here, 
         // we just want to group them based on the tags!
-        var entries = repo.FindItemsWithin(t.start, t.end, new());
-        Print($"< {t.start.ShortDate()} - {t.end.ShortDate()} >");
+        var entries = repo.FindItemsWithin(t.Start, t.End, new());
+        Print($"< {t.Start.ShortDate()} - {t.End.ShortDate()} >");
 
         List<TimeGroup> groups = [];
         HashSet<EntryData> usedEntries = [];

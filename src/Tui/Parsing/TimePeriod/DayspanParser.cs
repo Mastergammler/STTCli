@@ -2,7 +2,7 @@ using static Symbols;
 
 public class DayspanParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
-    public const long Pattern = 0b0110;
+    public const int Pattern = (int)SequencePatterns.NL;
 
     // Expected pattern num|letter
     public Result<TimePeriod> Parse(SequenceBuilder sequence)
