@@ -1,7 +1,9 @@
+using static SequencePatterns;
+
 public class QuarterParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
-    public const long PatternShort = 0b1001;
-    public const long PatternLong = 0b01111001;
+    public const long PatternShort = (int)LN;
+    public const long PatternLong = (int)N_LN;
 
     public Result<TimePeriod> Parse(SequenceBuilder seq)
     {

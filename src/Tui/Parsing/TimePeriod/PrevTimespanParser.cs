@@ -1,6 +1,6 @@
 public class PrevTimespanParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
-    public const long Pattern = 0b101101;
+    public const int Pattern = (int)SequencePatterns.L_N;
 
     public Result<TimePeriod> Parse(SequenceBuilder seq)
     {

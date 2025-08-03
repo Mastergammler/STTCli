@@ -3,6 +3,8 @@ using System.Globalization;
 
 public static class Time
 {
+    public static readonly DateTime TIME_TEMPLATE_LOCAL = new DateTime(1, 1, 1, 23, 0, 0);
+
     public static DateTime Now() => DateTime.UtcNow;
     public static DateTime Today() => DateTime.UtcNow.Date;
 
@@ -10,6 +12,23 @@ public static class Time
     {
         var span = Now() - time;
         return span.Hours();
+    }
+
+    /// <summary>
+    ///  Will apply the defined default time if the time is null
+    /// </summary
+    public static DateTime WithTime(this DateTime refDate)
+    {
+        if (refDate.Hour == 0 && refDate.Minute == 0 && refDate.Second == 0)
+        {
+            return refDate.AddTime(TIME_TEMPLATE_LOCAL).ToUniversalTime();
+        }
+        return refDate;
+    }
+
+    public static DateTime AddTime(this DateTime refDate, DateTime template)
+    {
+        return new DateTime(refDate.Year, refDate.Month, refDate.Day, template.Hour, template.Minute, template.Second);
     }
 
     public static Func<DateTime, TimePeriod> SingleDay = d => new(d, d.Midnight());
@@ -45,6 +64,15 @@ public static class Time
     public static DateTime Som(this DateTime refDate) => new DateTime(refDate.Year, refDate.Month, 1);
 
     /// <summary>
+    ///     End of month
+    /// </summary
+    public static DateTime Eom(this DateTime refDate)
+    {
+        int lastDay = DateTime.DaysInMonth(refDate.Year, refDate.Month);
+        return new DateTime(refDate.Year, refDate.Month, lastDay);
+    }
+
+    /// <summary>
     ///     Start of year 
     /// </summary
     public static DateTime Soy(this DateTime refDate) => new DateTime(refDate.Year, 1, 1);
@@ -65,6 +93,16 @@ public static class Time
         int quarter = week / 13;
         int quarterStartCw = 13 * quarter + 1;
         return ISOWeek.ToDateTime(refDate.Year, quarterStartCw, DayOfWeek.Monday);
+    }
+
+    /// <summary>
+    ///  Returns the date based on a weekday input
+    ///  A week offset can be specified to get the day of the next (offset 1) or previous (offset -1) week
+    /// </summary
+    public static DateTime Weekday(this DateTime refDate, DayOfWeek weekday, int weekOffset = 0)
+    {
+        var week = ISOWeek.GetWeekOfYear(refDate.AddDays(weekOffset * 7));
+        return ISOWeek.ToDateTime(refDate.Year, week, weekday);
     }
 
     /// <summary>

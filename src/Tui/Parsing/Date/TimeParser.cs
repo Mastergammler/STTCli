@@ -1,20 +1,26 @@
 using static Symbols;
-using static CharType;
+using static SequencePatterns;
 
 public class TimeParser(DateTime today) : ISequenceParsingStrategy<DateTime>
 {
-    public const long Pattern = (long)NUMBER;
+    public const int Pattern = (int)_N;
+    public const int PatternDirect = (int)N;
 
     public Result<DateTime> Parse(SequenceBuilder seq)
     {
-        if (seq.Pattern != Pattern) throw new ArgumentException("Parser not appropriate for current sequence!");
+        if (seq.Pattern != Pattern && seq.Pattern != PatternDirect)
+            throw new ArgumentException("Parser not appropriate for current sequence!");
 
-        int length = seq.Get(0).CharCount;
+        int seqIdx = seq.Pattern == PatternDirect ? 0 : 1;
+
+        int length = seq.Get(seqIdx).CharCount;
+        string timeStr = seq.Get(seqIdx).Str;
+
         if (length == 3 || length == 4)
         {
-            var splitIdx = seq.Expression.Length == 4 ? 2 : 1;
-            var hourStr = seq.Expression[..splitIdx];
-            var minStr = seq.Expression[splitIdx..];
+            var splitIdx = timeStr.Length == 4 ? 2 : 1;
+            var hourStr = timeStr[..splitIdx];
+            var minStr = timeStr[splitIdx..];
             var today = Time.Today();
 
             var minResult = minStr.ParseInt(i => i >= 0 && i < 60, NUM_INVALID_MIN);
@@ -29,9 +35,11 @@ public class TimeParser(DateTime today) : ISequenceParsingStrategy<DateTime>
     }
 }
 
+//TODO: this should be a delegate parser also, similar to weekday delegate
+// -> to be consistent
 public class DatedTimeParser(DateTime today) : ISequenceParsingStrategy<DateTime>
 {
-    public const long Pattern = (long)NUMBER << 4 | (long)SYMBOL << 2 | (long)NUMBER;
+    public const int Pattern = (int)N_N;
 
     public Result<DateTime> Parse(SequenceBuilder seq)
     {

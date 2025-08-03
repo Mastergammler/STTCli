@@ -1,10 +1,10 @@
 public class TimespanKeywordParser(DateTime today) : ISequenceParsingStrategy<TimePeriod>
 {
-    public const long Pattern = 0b10;
+    public const int Pattern = (int)SequencePatterns.L;
 
     public Result<TimePeriod> Parse(SequenceBuilder builder)
     {
-        int length = builder.TotalCharCount;
+        if (builder.Pattern != Pattern) throw new ArgumentException("Parser not appropriate for current sequence!");
 
         return builder.Expression switch
         {
