@@ -21,7 +21,6 @@ public class TimeParser(DateTime today) : ISequenceParsingStrategy<DateTime>
             var splitIdx = timeStr.Length == 4 ? 2 : 1;
             var hourStr = timeStr[..splitIdx];
             var minStr = timeStr[splitIdx..];
-            var today = Time.Today();
 
             var minResult = minStr.ParseInt(i => i >= 0 && i < 60, NUM_INVALID_MIN);
             return hourStr.ParseInt(i => i >= 0 && i < 24, NUM_INVALID_HOUR)
