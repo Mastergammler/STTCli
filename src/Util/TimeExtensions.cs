@@ -43,6 +43,7 @@ public static class Time
     /// <summary>
     ///     Start of week 
     /// </summary
+    /// FIXME: Year is passed in, which means it can be wrong for CW01 in the new year
     public static DateTime Sow(this DateTime refDate)
     {
         var week = ISOWeek.GetWeekOfYear(refDate);

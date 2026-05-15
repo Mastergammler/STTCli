@@ -34,7 +34,10 @@ public class ShowProjectItemsCmd(ProjectRepository projects, TagRepository tags,
         if (ValidateSingleMatch(projectName, entities, e => e.Name))
         {
             var project = entities.Single();
-            var tasks = projects.FindTasks(project);
+            var tasks = projects.FindTasks(project)
+                                .OrderByDescending(t => t.IsFinished)
+                                .ThenBy(t => t.Finished)
+                                .ThenByDescending(t => t.Name);
             var entries = times.FindEntriesByParent(project.Id);
             var totalTime = entries.Total();
             var grouped = entries.GroupBy(e => e.Item.Name)
@@ -62,7 +65,7 @@ public class ShowProjectItemsCmd(ProjectRepository projects, TagRepository tags,
                                             Priority = 10
                                         });
 
-            table.AddData(tasks.Select(i => new object[]
+            table.AddData(tasks.TakeLast(35).Select(i => new object[]
             {
                 i.Name.Truncate(36,true),
                 DisplayTags(tags.All(), i.Tags).Truncate(24,true),
